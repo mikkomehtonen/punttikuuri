@@ -1,70 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../schema';
 import { eq, asc, sql, and } from 'drizzle-orm';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { registerUser } from '../../auth';
 import { exerciseType, workoutSession, setEntry } from '../schema';
+import { createTestDb, destroyTestDb, cleanAllTables } from './test-utils';
 
 const TEST_DB_PATH = 'data/test-exercise.db';
 let db: BetterSQLite3Database<typeof schema>;
 let sqlite: Database.Database;
 
-function setupTables() {
-	sqlite = new Database(TEST_DB_PATH);
-	sqlite.pragma('journal_mode = WAL');
-	sqlite.pragma('foreign_keys = ON');
-
-	sqlite.exec(`
-		CREATE TABLE IF NOT EXISTS user (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL,
-			locale TEXT NOT NULL DEFAULT 'en',
-			theme TEXT NOT NULL DEFAULT 'system',
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS session (
-			id TEXT PRIMARY KEY,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			expires_at TEXT NOT NULL,
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS exercise_type (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			name TEXT NOT NULL,
-			short_name TEXT,
-			display_order INTEGER,
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS workout_session (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			exercise_type_id INTEGER NOT NULL REFERENCES exercise_type(id) ON DELETE CASCADE,
-			workout_date TEXT NOT NULL,
-			created_at TEXT NOT NULL,
-			UNIQUE(user_id, exercise_type_id, workout_date)
-		);
-		CREATE TABLE IF NOT EXISTS set_entry (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			workout_session_id INTEGER NOT NULL REFERENCES workout_session(id) ON DELETE CASCADE,
-			set_number INTEGER NOT NULL,
-			weight_kg REAL NOT NULL,
-			repetitions INTEGER NOT NULL,
-			created_at TEXT NOT NULL
-		);
-	`);
-
-	db = drizzle(sqlite, { schema });
-}
-
 let userIdA: number;
 let userIdB: number;
 
 beforeAll(() => {
-	setupTables();
+	const testDb = createTestDb(TEST_DB_PATH);
+	sqlite = testDb.sqlite;
+	db = testDb.db;
 
 	const userA = registerUser({ username: 'exercise_user_a', password: 'password123' }, db);
 	if (!userA.ok) throw new Error('Failed to create user A');
@@ -76,15 +29,20 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-	sqlite.close();
+	destroyTestDb(sqlite);
 });
 
 describe('Exercise Type Management', () => {
 	beforeEach(() => {
-		// Remove exercise data but keep users
-		sqlite.exec('DELETE FROM set_entry');
-		sqlite.exec('DELETE FROM workout_session');
-		sqlite.exec('DELETE FROM exercise_type');
+		cleanAllTables(sqlite);
+		// Re-create users for isolation tests
+		const userA = registerUser({ username: 'exercise_user_a', password: 'password123' }, db);
+		if (!userA.ok) throw new Error('Failed to create user A');
+		userIdA = userA.user.id;
+
+		const userB = registerUser({ username: 'exercise_user_b', password: 'password123' }, db);
+		if (!userB.ok) throw new Error('Failed to create user B');
+		userIdB = userB.user.id;
 	});
 
 	it('should create an exercise type with name, short_name, and display_order', () => {
@@ -123,10 +81,7 @@ describe('Exercise Type Management', () => {
 	});
 
 	it('should reject empty name (database constraint: NOT NULL)', () => {
-		// The NOT NULL constraint on name is enforced by the schema, not by the DB at the SQLite level
-		// (SQLite allows empty strings). We validate in the action handler.
-		// Names longer than 100 chars are also validated in the action handler.
-		// This test documents the DB-level expectation.
+		// SQLite allows empty strings even with NOT NULL
 		const result = db
 			.insert(exerciseType)
 			.values({
@@ -209,7 +164,6 @@ describe('Exercise Type Management', () => {
 	});
 
 	it('should cascade delete exercises when user is deleted', () => {
-		// Register a temporary user
 		const tempUser = registerUser({ username: 'temp_exercise_user', password: 'password123' }, db);
 		if (!tempUser.ok) throw new Error('Failed to create temp user');
 
@@ -221,7 +175,6 @@ describe('Exercise Type Management', () => {
 			})
 			.run();
 
-		// Delete the user
 		db.delete(schema.user).where(eq(schema.user.id, tempUser.user.id)).run();
 
 		const exercises = db
@@ -238,9 +191,15 @@ describe('Workout Logging', () => {
 	let exerciseId: number;
 
 	beforeEach(() => {
-		sqlite.exec('DELETE FROM set_entry');
-		sqlite.exec('DELETE FROM workout_session');
-		sqlite.exec('DELETE FROM exercise_type');
+		cleanAllTables(sqlite);
+		// Re-create users
+		const userA = registerUser({ username: 'exercise_user_a', password: 'password123' }, db);
+		if (!userA.ok) throw new Error('Failed to create user A');
+		userIdA = userA.user.id;
+
+		const userB = registerUser({ username: 'exercise_user_b', password: 'password123' }, db);
+		if (!userB.ok) throw new Error('Failed to create user B');
+		userIdB = userB.user.id;
 
 		const ex = db
 			.insert(exerciseType)
@@ -289,7 +248,6 @@ describe('Workout Logging', () => {
 			.returning()
 			.get();
 
-		// Insert 3 sets
 		for (let i = 1; i <= 3; i++) {
 			db.insert(setEntry)
 				.values({
@@ -328,7 +286,6 @@ describe('Workout Logging', () => {
 			})
 			.run();
 
-		// Second insert with same user/exercise/date should fail
 		expect(() => {
 			db.insert(workoutSession)
 				.values({
@@ -376,7 +333,6 @@ describe('Workout Logging', () => {
 		const today = new Date().toISOString().slice(0, 10);
 		const nowISO = new Date().toISOString();
 
-		// User A creates a session
 		const wsA = db
 			.insert(workoutSession)
 			.values({
@@ -388,7 +344,6 @@ describe('Workout Logging', () => {
 			.returning()
 			.get();
 
-		// User A adds a set
 		db.insert(setEntry)
 			.values({
 				workout_session_id: wsA.id,
@@ -399,7 +354,6 @@ describe('Workout Logging', () => {
 			})
 			.run();
 
-		// User B should not see any sessions for the same exercise
 		const userBSessions = db
 			.select()
 			.from(workoutSession)
@@ -436,7 +390,6 @@ describe('Workout Logging', () => {
 			})
 			.run();
 
-		// Delete the workout session
 		db.delete(workoutSession).where(eq(workoutSession.id, ws.id)).run();
 
 		const sets = db.select().from(setEntry).where(eq(setEntry.workout_session_id, ws.id)).all();
@@ -446,10 +399,7 @@ describe('Workout Logging', () => {
 
 describe('User Preferences', () => {
 	beforeEach(() => {
-		sqlite.exec('DELETE FROM workout_session');
-		sqlite.exec('DELETE FROM exercise_type');
-		sqlite.exec('DELETE FROM session');
-		sqlite.exec('DELETE FROM user');
+		cleanAllTables(sqlite);
 	});
 
 	it('should create user with default locale and theme', () => {
@@ -503,7 +453,6 @@ describe('User Preferences', () => {
 			.where(eq(schema.user.id, regResult.user.id))
 			.run();
 
-		// Re-fetch user (simulating new page load)
 		const refetched = db
 			.select()
 			.from(schema.user)

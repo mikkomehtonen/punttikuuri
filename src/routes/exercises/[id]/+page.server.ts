@@ -122,6 +122,17 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid exercise ID' });
 		}
 
+		// Verify the exercise exists and belongs to the current user
+		const exercise = db
+			.select({ id: exerciseType.id })
+			.from(exerciseType)
+			.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user.id)))
+			.get();
+
+		if (!exercise) {
+			return fail(404, { error: 'Exercise not found' });
+		}
+
 		const formData = await request.formData();
 		const weightKgStr = String(formData.get('weight_kg') ?? '');
 		const repetitionsStr = String(formData.get('repetitions') ?? '');
@@ -144,9 +155,9 @@ export const actions: Actions = {
 		const nowISO = new Date().toISOString();
 
 		// Use a transaction to atomically find-or-create session and insert set
-		db.transaction(() => {
+		db.transaction((tx) => {
 			// Find existing workout session for today
-			let ws = db
+			let ws = tx
 				.select()
 				.from(workoutSession)
 				.where(
@@ -161,7 +172,7 @@ export const actions: Actions = {
 			// Create if not found (with retry in case of concurrent insert)
 			if (!ws) {
 				try {
-					ws = db
+					ws = tx
 						.insert(workoutSession)
 						.values({
 							user_id: userId,
@@ -182,7 +193,7 @@ export const actions: Actions = {
 					}
 					// UNIQUE constraint violation — another request created it first;
 					// re-fetch the session created by the concurrent request
-					const existing = db
+					const existing = tx
 						.select()
 						.from(workoutSession)
 						.where(
@@ -201,7 +212,7 @@ export const actions: Actions = {
 			}
 
 			// Get next set number atomically within the transaction
-			const maxSet = db
+			const maxSet = tx
 				.select({ max: sql<number>`COALESCE(MAX(${setEntry.set_number}), 0)` })
 				.from(setEntry)
 				.where(eq(setEntry.workout_session_id, ws.id))
@@ -209,7 +220,7 @@ export const actions: Actions = {
 
 			const nextSetNumber = (maxSet?.max ?? 0) + 1;
 
-			db.insert(setEntry)
+			tx.insert(setEntry)
 				.values({
 					workout_session_id: ws.id,
 					set_number: nextSetNumber,

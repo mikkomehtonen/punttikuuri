@@ -1,78 +1,20 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../schema';
+import { createTestDb, destroyTestDb } from './test-utils';
 
-// Use a test database file
 const TEST_DB_PATH = 'data/test-punttikuuri.db';
+let sqlite: Database.Database;
 
-function createTestDb() {
-	const sqlite = new Database(TEST_DB_PATH);
-	sqlite.pragma('journal_mode = WAL');
-	sqlite.pragma('foreign_keys = ON');
+beforeAll(() => {
+	const testDb = createTestDb(TEST_DB_PATH);
+	sqlite = testDb.sqlite;
+});
 
-	// Create tables manually for test isolation
-	sqlite.exec(`
-		CREATE TABLE IF NOT EXISTS user (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL,
-			locale TEXT NOT NULL DEFAULT 'en',
-			theme TEXT NOT NULL DEFAULT 'system',
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS session (
-			id TEXT PRIMARY KEY,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			expires_at TEXT NOT NULL,
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS exercise_type (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			name TEXT NOT NULL,
-			short_name TEXT,
-			display_order INTEGER,
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS workout_session (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			exercise_type_id INTEGER NOT NULL REFERENCES exercise_type(id) ON DELETE CASCADE,
-			workout_date TEXT NOT NULL,
-			created_at TEXT NOT NULL,
-			UNIQUE(user_id, exercise_type_id, workout_date)
-		);
-		CREATE TABLE IF NOT EXISTS set_entry (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			workout_session_id INTEGER NOT NULL REFERENCES workout_session(id) ON DELETE CASCADE,
-			set_number INTEGER NOT NULL,
-			weight_kg REAL NOT NULL,
-			repetitions INTEGER NOT NULL,
-			created_at TEXT NOT NULL
-		);
-	`);
-
-	const db = drizzle(sqlite, { schema });
-	return { sqlite, db };
-}
-
-function destroyTestDb(sqlite: Database.Database) {
-	sqlite.close();
-}
+afterAll(() => {
+	destroyTestDb(sqlite);
+});
 
 describe('Schema', () => {
-	let sqlite: Database.Database;
-
-	beforeAll(() => {
-		const testDb = createTestDb();
-		sqlite = testDb.sqlite;
-	});
-
-	afterAll(() => {
-		destroyTestDb(sqlite);
-	});
-
 	it('should have user table', () => {
 		const result = sqlite.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='user'");
 		expect(result).toBeTruthy();

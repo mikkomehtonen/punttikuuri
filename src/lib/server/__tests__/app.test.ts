@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { validateUsername, validatePassword } from '../auth';
 import { isProtectedRoute, isAuthRoute } from '../../../hooks.server';
 import { validateWeight, validateReps } from '../workout-validation';
 
@@ -12,7 +11,7 @@ describe('Task 1 - Project Scaffolding & Database Setup', () => {
 	});
 });
 
-describe('Task 2 - Authentication redirect protection', () => {
+describe('Task 2 - Authentication redirect protection (via hooks.server.ts)', () => {
 	it('should identify /exercises as a protected route', () => {
 		expect(isProtectedRoute('/exercises')).toBe(true);
 	});
@@ -58,34 +57,6 @@ describe('Task 2 - Authentication redirect protection', () => {
 	});
 });
 
-describe('Task 2/3 - Auth validation functions (exercised by register action)', () => {
-	it('should accept valid usernames via validateUsername', () => {
-		expect(validateUsername('testuser')).toBeNull();
-		expect(validateUsername('abc')).toBeNull();
-		expect(validateUsername('user_123')).toBeNull();
-	});
-
-	it('should reject empty usernames via validateUsername', () => {
-		expect(validateUsername('')).not.toBeNull();
-	});
-
-	it('should reject short usernames via validateUsername', () => {
-		expect(validateUsername('ab')).not.toBeNull();
-	});
-
-	it('should reject long usernames via validateUsername', () => {
-		expect(validateUsername('a'.repeat(31))).not.toBeNull();
-	});
-
-	it('should accept 8+ char passwords via validatePassword', () => {
-		expect(validatePassword('12345678')).toBeNull();
-	});
-
-	it('should reject short passwords via validatePassword', () => {
-		expect(validatePassword('1234567')).not.toBeNull();
-	});
-});
-
 describe('Task 4 - Workout validation (imported from production code)', () => {
 	it('should accept valid weight and reps', () => {
 		expect(validateWeight('100')).toBeNull();
@@ -109,7 +80,6 @@ describe('Task 4 - Workout validation (imported from production code)', () => {
 	});
 
 	it('should reject partially-numeric weight (e.g. 5abc)', () => {
-		// Number('5abc') returns NaN, so this is properly rejected
 		expect(validateWeight('5abc')).not.toBeNull();
 	});
 
@@ -135,21 +105,6 @@ describe('Task 4 - Workout validation (imported from production code)', () => {
 
 	it('should reject decimal reps (non-whole number)', () => {
 		expect(validateReps('5.5')).not.toBeNull();
-	});
-});
-
-describe('Task 5 - Settings page protection', () => {
-	it('should throw redirect when unauthenticated user accesses settings', () => {
-		function settingsLoad(locals: { user: unknown }) {
-			if (!locals.user) {
-				throw new Error('Redirect to /login');
-			}
-			return { currentLocale: 'en', currentTheme: 'system' };
-		}
-
-		expect(() => settingsLoad({ user: null })).toThrow('Redirect to /login');
-		expect(() => settingsLoad({ user: undefined })).toThrow('Redirect to /login');
-		expect(() => settingsLoad({ user: { id: 1 } })).not.toThrow();
 	});
 });
 

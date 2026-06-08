@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../schema';
 import {
 	registerUser,
@@ -10,36 +10,11 @@ import {
 	validateUsername,
 	validatePassword
 } from '../../auth';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import { createTestDb, destroyTestDb } from './test-utils';
 
 const TEST_DB_PATH = 'data/test-auth.db';
 let db: BetterSQLite3Database<typeof schema>;
 let sqlite: Database.Database;
-
-function setupTables() {
-	sqlite = new Database(TEST_DB_PATH);
-	sqlite.pragma('journal_mode = WAL');
-	sqlite.pragma('foreign_keys = ON');
-
-	sqlite.exec(`
-		CREATE TABLE IF NOT EXISTS user (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL,
-			locale TEXT NOT NULL DEFAULT 'en',
-			theme TEXT NOT NULL DEFAULT 'system',
-			created_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS session (
-			id TEXT PRIMARY KEY,
-			user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-			expires_at TEXT NOT NULL,
-			created_at TEXT NOT NULL
-		);
-	`);
-
-	db = drizzle(sqlite, { schema });
-}
 
 function cleanTables() {
 	sqlite.exec('DELETE FROM session');
@@ -47,11 +22,13 @@ function cleanTables() {
 }
 
 beforeAll(() => {
-	setupTables();
+	const testDb = createTestDb(TEST_DB_PATH);
+	sqlite = testDb.sqlite;
+	db = testDb.db;
 });
 
 afterAll(() => {
-	sqlite.close();
+	destroyTestDb(sqlite);
 });
 
 describe('validateUsername', () => {
