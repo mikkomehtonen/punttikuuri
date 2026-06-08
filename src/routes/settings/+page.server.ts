@@ -35,9 +35,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid theme' });
 		}
 
-		db.transaction((tx) => {
-			tx.update(user).set({ locale, theme }).where(eq(user.id, locals.user!.id)).run();
-		});
+		db.update(user).set({ locale, theme }).where(eq(user.id, locals.user!.id)).run();
 
 		cookies.set('locale', locale, PUBLIC_COOKIE_OPTIONS);
 		cookies.set('theme', theme, PUBLIC_COOKIE_OPTIONS);

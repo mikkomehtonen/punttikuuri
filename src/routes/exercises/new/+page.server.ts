@@ -1,11 +1,8 @@
 import { redirect, fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType } from '$lib/server/db/schema';
-
-export const load: PageServerLoad = async () => {
-	return {};
-};
+import { validateExerciseName } from '$lib/server/workout-validation';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -18,8 +15,9 @@ export const actions: Actions = {
 		const shortName = String(formData.get('short_name') ?? '').trim() || null;
 		const displayOrderStr = String(formData.get('display_order') ?? '');
 
-		if (!name || name.length > 100) {
-			return fail(400, { error: 'Exercise name is required (max 100 characters)' });
+		const nameError = validateExerciseName(name);
+		if (nameError) {
+			return fail(400, { error: nameError });
 		}
 
 		let displayOrder: number | null = null;

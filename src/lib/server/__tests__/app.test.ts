@@ -2,20 +2,29 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { isProtectedRoute, isAuthRoute } from '../../../hooks.server';
-import { validateWeight, validateReps } from '../workout-validation';
+import { validateWeight, validateReps, validateExerciseName } from '../workout-validation';
 import { pwaManifest } from '../../pwa-manifest';
 import {
 	validateUsername,
 	validatePassword,
 	setAuthCookies,
 	clearAuthCookies,
-	PUBLIC_COOKIE_OPTIONS
+	PUBLIC_COOKIE_OPTIONS,
+	isValidLocale,
+	isValidTheme,
+	VALID_LOCALES,
+	VALID_THEMES
 } from '../auth';
 
 describe('Task 1 - Project Scaffolding & Database Setup', () => {
 	it('should have data/*.db in .gitignore', () => {
 		const gitignore = fs.readFileSync(path.resolve('.gitignore'), 'utf-8');
 		expect(gitignore).toContain('data/*.db');
+	});
+
+	it('should have a valid SvelteKit configuration with adapter-node', () => {
+		const svelteConfig = fs.readFileSync(path.resolve('svelte.config.js'), 'utf-8');
+		expect(svelteConfig).toContain('adapter-node');
 	});
 
 	it('should have Tailwind CSS v4 configured with dark mode class strategy', () => {
@@ -131,6 +140,14 @@ describe('Task 4 - Workout validation (imported from production code)', () => {
 	it('should reject decimal reps (non-whole number)', () => {
 		expect(validateReps('5.5')).not.toBeNull();
 	});
+
+	it('should reject Infinity weight', () => {
+		expect(validateWeight('Infinity')).not.toBeNull();
+	});
+
+	it('should reject -Infinity weight', () => {
+		expect(validateWeight('-Infinity')).not.toBeNull();
+	});
 });
 
 describe('Task 6 - PWA Configuration', () => {
@@ -212,23 +229,19 @@ describe('Task 2 - Authentication cookie configuration', () => {
 
 describe('Task 3 - Exercise name validation', () => {
 	it('should reject empty exercise name', () => {
-		const name = ''.trim();
-		expect(!name || name.length > 100).toBe(true);
+		expect(validateExerciseName('')).not.toBeNull();
 	});
 
 	it('should reject exercise name over 100 characters', () => {
-		const name = 'a'.repeat(101);
-		expect(!name || name.length > 100).toBe(true);
+		expect(validateExerciseName('a'.repeat(101))).not.toBeNull();
 	});
 
 	it('should accept valid exercise name', () => {
-		const name = 'Bench Press';
-		expect(!name || name.length > 100).toBe(false);
+		expect(validateExerciseName('Bench Press')).toBeNull();
 	});
 
 	it('should reject whitespace-only exercise name', () => {
-		const name = '   '.trim();
-		expect(!name || name.length > 100).toBe(true);
+		expect(validateExerciseName('   '.trim())).not.toBeNull();
 	});
 });
 
@@ -253,21 +266,30 @@ describe('Task 5 - FOUC prevention', () => {
 });
 
 describe('Task 5 - Settings validation', () => {
-	it('should validate locale values', () => {
-		const validLocales = ['en', 'fi'];
-		expect(validLocales).toContain('en');
-		expect(validLocales).toContain('fi');
-		expect(validLocales).not.toContain('de');
-		expect(validLocales).not.toContain('');
+	it('should validate locale values using production function', () => {
+		expect(isValidLocale('en')).toBe(true);
+		expect(isValidLocale('fi')).toBe(true);
+		expect(isValidLocale('de')).toBe(false);
+		expect(isValidLocale('')).toBe(false);
 	});
 
-	it('should validate theme values', () => {
-		const validThemes = ['light', 'dark', 'system'];
-		expect(validThemes).toContain('light');
-		expect(validThemes).toContain('dark');
-		expect(validThemes).toContain('system');
-		expect(validThemes).not.toContain('blue');
-		expect(validThemes).not.toContain('');
+	it('should validate theme values using production function', () => {
+		expect(isValidTheme('light')).toBe(true);
+		expect(isValidTheme('dark')).toBe(true);
+		expect(isValidTheme('system')).toBe(true);
+		expect(isValidTheme('blue')).toBe(false);
+		expect(isValidTheme('')).toBe(false);
+	});
+
+	it('should have expected valid locales', () => {
+		expect(VALID_LOCALES).toContain('en');
+		expect(VALID_LOCALES).toContain('fi');
+	});
+
+	it('should have expected valid themes', () => {
+		expect(VALID_THEMES).toContain('light');
+		expect(VALID_THEMES).toContain('dark');
+		expect(VALID_THEMES).toContain('system');
 	});
 });
 
