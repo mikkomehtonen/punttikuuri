@@ -5,7 +5,7 @@ import { eq, asc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		return { locale: locals.locale, theme: locals.theme, exercises: [] };
+		return { exercises: [] };
 	}
 
 	const exercises = db
@@ -16,8 +16,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.all();
 
 	return {
-		locale: locals.locale,
-		theme: locals.theme,
 		exercises: exercises.map((e) => ({
 			id: e.id,
 			name: e.name,

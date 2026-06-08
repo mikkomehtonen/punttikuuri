@@ -1,9 +1,9 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { loginUser } from '$lib/server/auth';
+import { loginUser, setAuthCookies } from '$lib/server/auth';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	return { locale: locals.locale, theme: locals.theme };
+export const load: PageServerLoad = async () => {
+	return {};
 };
 
 export const actions: Actions = {
@@ -18,27 +18,7 @@ export const actions: Actions = {
 			return fail(400, { error: result.error });
 		}
 
-		cookies.set('session_id', result.sessionToken, {
-			httpOnly: true,
-			sameSite: 'lax',
-			path: '/',
-			maxAge: 60 * 60 * 24 * 30
-		});
-
-		cookies.set('locale', result.user.locale, {
-			httpOnly: false,
-			sameSite: 'lax',
-			path: '/',
-			maxAge: 60 * 60 * 24 * 30
-		});
-
-		cookies.set('theme', result.user.theme, {
-			httpOnly: false,
-			sameSite: 'lax',
-			path: '/',
-			maxAge: 60 * 60 * 24 * 30
-		});
-
+		setAuthCookies(cookies, result.sessionToken, result.user.locale, result.user.theme);
 		throw redirect(303, '/exercises');
 	}
 };

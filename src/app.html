@@ -6,10 +6,13 @@
 		<meta name="text-scale" content="scale" />
 		%sveltekit.head%
 		<script>
-			(function() {
+			(function () {
 				var cookie = document.cookie.match(/(?:^|;\s*)theme=([^;]*)/);
 				var theme = cookie ? cookie[1] : 'system';
-				if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+				if (
+					theme === 'dark' ||
+					(theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+				) {
 					document.documentElement.classList.add('dark');
 				}
 			})();

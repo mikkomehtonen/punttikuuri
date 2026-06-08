@@ -48,7 +48,6 @@ When given a story number, run `peck story load <id>` first. It checks out the c
    - Reviewers contradict each other
 </verify>
 
-
 <complete>
 Call reflection skill. Report only when all required verdicts are from the current HEAD commit and the tree is clean — if you can't fill a verdict line, you're not done:
 
@@ -61,6 +60,7 @@ Blocker: <none | description>
 ```
 
 Example:
+
 ```
 Summary: Added rate limiting middleware to the /api/auth endpoints
 Acceptance: a3f8c12 Pass

@@ -3,8 +3,8 @@ import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType } from '$lib/server/db/schema';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	return { locale: locals.locale, theme: locals.theme };
+export const load: PageServerLoad = async () => {
+	return {};
 };
 
 export const actions: Actions = {
@@ -22,14 +22,20 @@ export const actions: Actions = {
 			return fail(400, { error: 'Exercise name is required (max 100 characters)' });
 		}
 
-		const displayOrder = displayOrderStr ? parseInt(displayOrderStr, 10) : null;
+		let displayOrder: number | null = null;
+		if (displayOrderStr) {
+			displayOrder = parseInt(displayOrderStr, 10);
+			if (isNaN(displayOrder) || displayOrder < 0 || displayOrder > 99999) {
+				return fail(400, { error: 'Display order must be between 0 and 99999' });
+			}
+		}
 
 		db.insert(exerciseType)
 			.values({
 				user_id: locals.user.id,
 				name,
 				short_name: shortName,
-				display_order: displayOrder ?? null,
+				display_order: displayOrder,
 				created_at: new Date().toISOString()
 			})
 			.run();

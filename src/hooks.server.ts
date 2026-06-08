@@ -16,7 +16,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const pathname = event.url.pathname;
 
-	const isProtected = protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+	const isProtected = protectedRoutes.some(
+		(route) => pathname === route || pathname.startsWith(route + '/')
+	);
 	const isAuth = authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
 
 	if (!user && isProtected) {

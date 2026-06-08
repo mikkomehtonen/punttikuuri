@@ -4,9 +4,14 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { db as defaultDb } from './db';
 import * as schema from './db/schema';
 import { user, session } from './db/schema';
+import type { Cookies } from '@sveltejs/kit';
 
 const SALT_ROUNDS = 12;
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const VALID_LOCALES = ['en', 'fi'] as const;
+export const VALID_THEMES = ['light', 'dark', 'system'] as const;
+export type ValidLocale = (typeof VALID_LOCALES)[number];
+export type ValidTheme = (typeof VALID_THEMES)[number];
 
 function generateId(): string {
 	const bytes = new Uint8Array(16);
@@ -85,17 +90,30 @@ export function registerUser(
 	const passwordHash = bcrypt.hashSync(input.password, SALT_ROUNDS);
 	const createdAt = nowISO();
 
-	const newUser = db
-		.insert(user)
-		.values({
-			username: input.username,
-			password_hash: passwordHash,
-			locale: 'en',
-			theme: 'system',
-			created_at: createdAt
-		})
-		.returning()
-		.get();
+	let newUser: typeof user.$inferSelect;
+	try {
+		newUser = db
+			.insert(user)
+			.values({
+				username: input.username,
+				password_hash: passwordHash,
+				locale: 'en',
+				theme: 'system',
+				created_at: createdAt
+			})
+			.returning()
+			.get();
+	} catch (err) {
+		if (
+			err &&
+			typeof err === 'object' &&
+			'code' in err &&
+			(err as { code: string }).code === 'SQLITE_CONSTRAINT_UNIQUE'
+		) {
+			return { ok: false, error: 'Username already taken', field: 'username' };
+		}
+		throw err;
+	}
 
 	const sessionToken = generateId();
 	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
@@ -217,7 +235,7 @@ export function deleteSession(
 
 export function updateUserLocale(
 	userId: number,
-	locale: string,
+	locale: ValidLocale,
 	db: BetterSQLite3Database<typeof schema> = defaultDb
 ): void {
 	db.update(user).set({ locale }).where(eq(user.id, userId)).run();
@@ -225,8 +243,39 @@ export function updateUserLocale(
 
 export function updateUserTheme(
 	userId: number,
-	theme: string,
+	theme: ValidTheme,
 	db: BetterSQLite3Database<typeof schema> = defaultDb
 ): void {
 	db.update(user).set({ theme }).where(eq(user.id, userId)).run();
+}
+
+const COOKIE_OPTIONS = {
+	httpOnly: true as const,
+	sameSite: 'lax' as const,
+	path: '/',
+	maxAge: 60 * 60 * 24 * 30 // 30 days
+};
+
+const PUBLIC_COOKIE_OPTIONS = {
+	httpOnly: false as const,
+	sameSite: 'lax' as const,
+	path: '/',
+	maxAge: 60 * 60 * 24 * 30
+};
+
+export function setAuthCookies(
+	cookies: Cookies,
+	sessionToken: string,
+	locale: string,
+	theme: string
+): void {
+	cookies.set('session_id', sessionToken, COOKIE_OPTIONS);
+	cookies.set('locale', locale, PUBLIC_COOKIE_OPTIONS);
+	cookies.set('theme', theme, PUBLIC_COOKIE_OPTIONS);
+}
+
+export function clearAuthCookies(cookies: Cookies): void {
+	cookies.delete('session_id', { path: '/' });
+	cookies.delete('locale', { path: '/' });
+	cookies.delete('theme', { path: '/' });
 }

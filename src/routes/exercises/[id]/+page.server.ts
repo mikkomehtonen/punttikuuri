@@ -9,10 +9,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, '/login');
 	}
 
+	const exerciseId = Number(params.id);
+	if (isNaN(exerciseId)) {
+		throw redirect(303, '/exercises');
+	}
+
 	const exercise = db
 		.select()
 		.from(exerciseType)
-		.where(and(eq(exerciseType.id, Number(params.id)), eq(exerciseType.user_id, locals.user.id)))
+		.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user.id)))
 		.get();
 
 	if (!exercise) {
@@ -21,7 +26,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const today = new Date().toISOString().slice(0, 10);
 
-	// Get today's workout session
 	const todaySession = db
 		.select()
 		.from(workoutSession)
@@ -49,13 +53,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.all();
 	}
 
-	// Get previous workout sessions (not today)
+	// Get previous workout sessions with their sets in one query
 	const previousSessionsData = db
 		.select({
-			id: workoutSession.id,
-			workout_date: workoutSession.workout_date
+			sessionId: workoutSession.id,
+			workout_date: workoutSession.workout_date,
+			set_number: setEntry.set_number,
+			weight_kg: setEntry.weight_kg,
+			repetitions: setEntry.repetitions
 		})
 		.from(workoutSession)
+		.leftJoin(setEntry, eq(setEntry.workout_session_id, workoutSession.id))
 		.where(
 			and(
 				eq(workoutSession.exercise_type_id, exercise.id),
@@ -63,34 +71,36 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				sql`${workoutSession.workout_date} != ${today}`
 			)
 		)
-		.orderBy(desc(workoutSession.workout_date))
+		.orderBy(desc(workoutSession.workout_date), asc(setEntry.set_number))
 		.all();
 
-	const previousSessions = previousSessionsData.map((s) => {
-		const sets = db
-			.select({
-				set_number: setEntry.set_number,
-				weight_kg: setEntry.weight_kg,
-				repetitions: setEntry.repetitions
-			})
-			.from(setEntry)
-			.where(eq(setEntry.workout_session_id, s.id))
-			.orderBy(asc(setEntry.set_number))
-			.all();
+	// Group sets by session
+	const sessionMap = new Map<
+		string,
+		{
+			workout_date: string;
+			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
+		}
+	>();
+	for (const row of previousSessionsData) {
+		if (!sessionMap.has(row.sessionId)) {
+			sessionMap.set(row.sessionId, {
+				workout_date: row.workout_date,
+				sets: []
+			});
+		}
+		if (row.set_number !== null) {
+			sessionMap.get(row.sessionId)!.sets.push({
+				set_number: row.set_number,
+				weight_kg: row.weight_kg!,
+				repetitions: row.repetitions!
+			});
+		}
+	}
 
-		return {
-			workout_date: s.workout_date,
-			sets: sets.map((set) => ({
-				set_number: set.set_number,
-				weight_kg: set.weight_kg,
-				repetitions: set.repetitions
-			}))
-		};
-	});
+	const previousSessions = Array.from(sessionMap.values());
 
 	return {
-		locale: locals.locale,
-		theme: locals.theme,
 		exercise: {
 			id: exercise.id,
 			name: exercise.name,
@@ -107,10 +117,14 @@ export const actions: Actions = {
 			throw redirect(303, '/login');
 		}
 
+		const exerciseId = Number(params.id);
+		if (isNaN(exerciseId)) {
+			return fail(400, { error: 'Invalid exercise ID' });
+		}
+
 		const formData = await request.formData();
 		const weightKgStr = (formData.get('weight_kg') as string) ?? '';
 		const repetitionsStr = (formData.get('repetitions') as string) ?? '';
-		const exerciseId = Number(params.id);
 
 		const weightKg = parseFloat(weightKgStr);
 		const repetitions = parseInt(repetitionsStr, 10);
@@ -119,7 +133,12 @@ export const actions: Actions = {
 			return fail(400, { error: 'Weight must be a positive number' });
 		}
 
-		if (!repetitionsStr || isNaN(repetitions) || repetitions <= 0 || !Number.isInteger(repetitions)) {
+		if (
+			!repetitionsStr ||
+			isNaN(repetitions) ||
+			repetitions <= 0 ||
+			!Number.isInteger(repetitions)
+		) {
 			return fail(400, { error: 'Reps must be a positive whole number' });
 		}
 

@@ -18,7 +18,9 @@
 
 <form method="POST" class="flex flex-col gap-4">
 	{#if form?.error}
-		<div class="rounded-lg bg-red-100 dark:bg-red-900/30 p-3 text-red-700 dark:text-red-300">{form.error}</div>
+		<div class="rounded-lg bg-red-100 p-3 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+			{form.error}
+		</div>
 	{/if}
 
 	<label class="flex flex-col gap-1">
@@ -28,7 +30,7 @@
 			type="text"
 			bind:value={username}
 			required
-			class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-h-[44px]"
+			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
 
@@ -39,16 +41,18 @@
 			type="password"
 			bind:value={password}
 			required
-			class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-h-[44px]"
+			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
 
-	<button class="rounded-lg bg-blue-600 px-6 py-3 text-white font-medium min-h-[44px]">
+	<button class="min-h-[44px] rounded-lg bg-blue-600 px-6 py-3 font-medium text-white">
 		{t('login.submit', locale)}
 	</button>
 </form>
 
 <p class="mt-4 text-gray-500 dark:text-gray-400">
 	{t('login.noAccount', locale)}
-	<a href="/register" class="text-blue-600 dark:text-blue-400 underline">{t('login.registerLink', locale)}</a>
+	<a href="/register" class="text-blue-600 underline dark:text-blue-400"
+		>{t('login.registerLink', locale)}</a
+	>
 </p>

@@ -19,7 +19,9 @@
 
 <form method="POST" class="flex flex-col gap-4">
 	{#if form?.error}
-		<div class="rounded-lg bg-red-100 dark:bg-red-900/30 p-3 text-red-700 dark:text-red-300">{form.error}</div>
+		<div class="rounded-lg bg-red-100 p-3 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+			{form.error}
+		</div>
 	{/if}
 
 	<label class="flex flex-col gap-1">
@@ -30,7 +32,7 @@
 			bind:value={name}
 			required
 			maxlength={100}
-			class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-h-[44px]"
+			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
 
@@ -40,7 +42,7 @@
 			name="short_name"
 			type="text"
 			bind:value={shortName}
-			class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-h-[44px]"
+			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
 
@@ -50,15 +52,18 @@
 			name="display_order"
 			type="number"
 			bind:value={displayOrder}
-			class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-h-[44px]"
+			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
 
-	<button class="rounded-lg bg-blue-600 px-6 py-3 text-white font-medium min-h-[44px]">
+	<button class="min-h-[44px] rounded-lg bg-blue-600 px-6 py-3 font-medium text-white">
 		{t('exercises.submit', locale)}
 	</button>
 </form>
 
-<a href="/exercises" class="mt-4 inline-block text-blue-600 dark:text-blue-400 underline min-h-[44px] min-w-[44px] flex items-center">
+<a
+	href="/exercises"
+	class="mt-4 flex inline-block min-h-[44px] min-w-[44px] items-center text-blue-600 underline dark:text-blue-400"
+>
 	{t('exercises.back', locale)}
 </a>

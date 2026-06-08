@@ -99,14 +99,14 @@ Tailwind CSS v4 with dark-mode class strategy (`dark` class on `<html>`). Three 
 
 ### Routes
 
-| Route | Purpose |
-|---|---|
-| `/login` | Login form |
-| `/register` | Registration form |
-| `/exercises` | Exercise list (main page) |
-| `/exercises/new` | Create exercise type |
+| Route             | Purpose                                        |
+| ----------------- | ---------------------------------------------- |
+| `/login`          | Login form                                     |
+| `/register`       | Registration form                              |
+| `/exercises`      | Exercise list (main page)                      |
+| `/exercises/new`  | Create exercise type                           |
 | `/exercises/[id]` | Exercise workout view (today's sets + history) |
-| `/settings` | Language and theme preferences |
+| `/settings`       | Language and theme preferences                 |
 
 ### Workout session auto-creation
 
@@ -259,25 +259,26 @@ npm run dev
 
 ## Technical Context
 
-| Package | Version | Notes |
-|---|---|---|
-| @sveltejs/kit | 2.63.1 | SvelteKit framework; uses Svelte 5 with runes |
-| svelte | 5.56.3 | Component API uses `$state()`, `$derived()`, `$effect()` — not legacy reactive declarations |
-| @sveltejs/adapter-node | 5.5.4 | Produces a Node.js server; configure in `svelte.config.js` |
-| vite | 8.0.16 | Build tool; already included by SvelteKit |
-| better-sqlite3 | 12.10.0 | Synchronous SQLite3 binding; database path: `data/punttikuuri.db` |
-| drizzle-orm | 0.45.2 | Type-safe ORM; schema in `src/lib/server/db/schema.ts`; import from `drizzle-orm/better-sqlite3` |
-| drizzle-kit | 0.31.10 | Migration tool; config in `drizzle.config.ts` |
-| bcryptjs | 3.0.3 | Pure JS bcrypt; no native compilation; 12 salt rounds |
-| @vite-pwa/sveltekit | 1.1.0 | PWA plugin; verify compatibility with adapter-node during implementation |
-| tailwindcss | 4.3.0 | CSS-first config; `@import "tailwindcss"` in `app.css`; dark mode via `.dark` class |
-| @tailwindcss/vite | 4.3.0 | Vite plugin for Tailwind v4; add to `vite.config.ts` |
-| vitest | 4.1.8 | Test runner |
-| @testing-library/svelte | 5.3.1 | Component testing; supports Svelte 5 |
-| @testing-library/jest-dom | 6.9.1 | DOM matchers for Vitest |
-| jsdom | 29.1.1 | DOM environment for Vitest |
+| Package                   | Version | Notes                                                                                            |
+| ------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| @sveltejs/kit             | 2.63.1  | SvelteKit framework; uses Svelte 5 with runes                                                    |
+| svelte                    | 5.56.3  | Component API uses `$state()`, `$derived()`, `$effect()` — not legacy reactive declarations      |
+| @sveltejs/adapter-node    | 5.5.4   | Produces a Node.js server; configure in `svelte.config.js`                                       |
+| vite                      | 8.0.16  | Build tool; already included by SvelteKit                                                        |
+| better-sqlite3            | 12.10.0 | Synchronous SQLite3 binding; database path: `data/punttikuuri.db`                                |
+| drizzle-orm               | 0.45.2  | Type-safe ORM; schema in `src/lib/server/db/schema.ts`; import from `drizzle-orm/better-sqlite3` |
+| drizzle-kit               | 0.31.10 | Migration tool; config in `drizzle.config.ts`                                                    |
+| bcryptjs                  | 3.0.3   | Pure JS bcrypt; no native compilation; 12 salt rounds                                            |
+| @vite-pwa/sveltekit       | 1.1.0   | PWA plugin; verify compatibility with adapter-node during implementation                         |
+| tailwindcss               | 4.3.0   | CSS-first config; `@import "tailwindcss"` in `app.css`; dark mode via `.dark` class              |
+| @tailwindcss/vite         | 4.3.0   | Vite plugin for Tailwind v4; add to `vite.config.ts`                                             |
+| vitest                    | 4.1.8   | Test runner                                                                                      |
+| @testing-library/svelte   | 5.3.1   | Component testing; supports Svelte 5                                                             |
+| @testing-library/jest-dom | 6.9.1   | DOM matchers for Vitest                                                                          |
+| jsdom                     | 29.1.1  | DOM environment for Vitest                                                                       |
 
 Key integration notes:
+
 - Svelte 5 runes: use `$state()` instead of `let`, `$derived()` instead of `$:`, `$effect()` instead of reactive statements.
 - Tailwind v4: no `tailwind.config.js`; configuration lives in CSS via `@theme` directive. Dark mode uses the `dark` selector variant with the `class` strategy.
 - Drizzle ORM with better-sqlite3: `import Database from 'better-sqlite3'` then `const db = drizzle(new Database('data/punttikuuri.db'), { schema })`.

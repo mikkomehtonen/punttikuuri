@@ -1,6 +1,6 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { updateUserLocale, updateUserTheme } from '$lib/server/auth';
+import { updateUserLocale, updateUserTheme, VALID_LOCALES, VALID_THEMES } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
@@ -8,8 +8,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		locale: locals.locale,
-		theme: locals.theme,
 		currentLocale: locals.user.locale,
 		currentTheme: locals.user.theme
 	};
@@ -25,8 +23,16 @@ export const actions: Actions = {
 		const locale = (formData.get('locale') as string) ?? 'en';
 		const theme = (formData.get('theme') as string) ?? 'system';
 
-		updateUserLocale(locals.user.id, locale);
-		updateUserTheme(locals.user.id, theme);
+		if (!VALID_LOCALES.includes(locale as never)) {
+			return fail(400, { error: 'Invalid locale' });
+		}
+
+		if (!VALID_THEMES.includes(theme as never)) {
+			return fail(400, { error: 'Invalid theme' });
+		}
+
+		updateUserLocale(locals.user.id, locale as never);
+		updateUserTheme(locals.user.id, theme as never);
 
 		cookies.set('locale', locale, {
 			httpOnly: false,
@@ -42,6 +48,6 @@ export const actions: Actions = {
 			maxAge: 60 * 60 * 24 * 30
 		});
 
-		return { saved: true, locale, theme };
+		return { saved: true };
 	}
 };
