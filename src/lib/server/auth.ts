@@ -30,6 +30,25 @@ function nowISO(): string {
 	return new Date().toISOString();
 }
 
+function createSessionForUser(userId: number, dbArg: BetterSQLite3Database<typeof schema>): string {
+	const sessionToken = generateId();
+	const sessionHash = hashToken(sessionToken);
+	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
+	const createdAt = nowISO();
+
+	dbArg
+		.insert(session)
+		.values({
+			id: sessionHash,
+			user_id: userId,
+			expires_at: expiresAt,
+			created_at: createdAt
+		})
+		.run();
+
+	return sessionToken;
+}
+
 export interface AuthUser {
 	id: number;
 	username: string;
@@ -120,19 +139,7 @@ export function registerUser(
 		throw err;
 	}
 
-	const sessionToken = generateId();
-	const sessionHash = hashToken(sessionToken);
-	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-
-	dbArg
-		.insert(session)
-		.values({
-			id: sessionHash,
-			user_id: newUser.id,
-			expires_at: expiresAt,
-			created_at: createdAt
-		})
-		.run();
+	const sessionToken = createSessionForUser(newUser.id, dbArg);
 
 	return {
 		ok: true,
@@ -177,20 +184,7 @@ export function loginUser(
 		return { ok: false, error: 'Invalid username or password' };
 	}
 
-	const sessionToken = generateId();
-	const sessionHash = hashToken(sessionToken);
-	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-	const createdAt = nowISO();
-
-	dbArg
-		.insert(session)
-		.values({
-			id: sessionHash,
-			user_id: existing.id,
-			expires_at: expiresAt,
-			created_at: createdAt
-		})
-		.run();
+	const sessionToken = createSessionForUser(existing.id, dbArg);
 
 	return {
 		ok: true,

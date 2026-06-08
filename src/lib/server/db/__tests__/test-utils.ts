@@ -1,63 +1,51 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import fs from 'node:fs';
+import path from 'node:path';
 import * as schema from '../schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-const CREATE_TABLES_SQL = `
-	CREATE TABLE IF NOT EXISTS user (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT NOT NULL UNIQUE,
-		password_hash TEXT NOT NULL,
-		locale TEXT NOT NULL DEFAULT 'en',
-		theme TEXT NOT NULL DEFAULT 'system',
-		created_at TEXT NOT NULL
-	);
-	CREATE TABLE IF NOT EXISTS session (
-		id TEXT PRIMARY KEY,
-		user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-		expires_at TEXT NOT NULL,
-		created_at TEXT NOT NULL
-	);
-	CREATE TABLE IF NOT EXISTS exercise_type (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-		name TEXT NOT NULL,
-		short_name TEXT,
-		display_order INTEGER,
-		created_at TEXT NOT NULL
-	);
-	CREATE TABLE IF NOT EXISTS workout_session (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-		exercise_type_id INTEGER NOT NULL REFERENCES exercise_type(id) ON DELETE CASCADE,
-		workout_date TEXT NOT NULL,
-		created_at TEXT NOT NULL,
-		UNIQUE(user_id, exercise_type_id, workout_date)
-	);
-	CREATE TABLE IF NOT EXISTS set_entry (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		workout_session_id INTEGER NOT NULL REFERENCES workout_session(id) ON DELETE CASCADE,
-		set_number INTEGER NOT NULL,
-		weight_kg REAL NOT NULL,
-		repetitions INTEGER NOT NULL,
-		created_at TEXT NOT NULL
-	);
-`;
+function loadMigrationSql(): string {
+	const migrationFile = path.resolve('drizzle/0000_wealthy_shockwave.sql');
+	const raw = fs.readFileSync(migrationFile, 'utf-8');
+	return raw
+		.split('--> statement-breakpoint')
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0)
+		.join(';\n');
+}
 
 export function createTestDb(dbPath: string): {
 	sqlite: Database.Database;
 	db: BetterSQLite3Database<typeof schema>;
 } {
+	for (const suffix of ['', '-wal', '-shm', '-journal']) {
+		const filePath = dbPath + suffix;
+		try {
+			fs.unlinkSync(filePath);
+		} catch {
+			// file may not exist, ignore
+		}
+	}
 	const sqlite = new Database(dbPath);
 	sqlite.pragma('journal_mode = WAL');
 	sqlite.pragma('foreign_keys = ON');
-	sqlite.exec(CREATE_TABLES_SQL);
+	const migrationSql = loadMigrationSql();
+	sqlite.exec(migrationSql);
 	const db = drizzle(sqlite, { schema });
 	return { sqlite, db };
 }
 
-export function destroyTestDb(sqlite: Database.Database): void {
+export function destroyTestDb(sqlite: Database.Database, dbPath: string): void {
 	sqlite.close();
+	for (const suffix of ['', '-wal', '-shm', '-journal']) {
+		const filePath = dbPath + suffix;
+		try {
+			fs.unlinkSync(filePath);
+		} catch {
+			// file may not exist, ignore
+		}
+	}
 }
 
 export function cleanAllTables(sqlite: Database.Database): void {

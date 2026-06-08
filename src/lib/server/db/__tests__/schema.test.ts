@@ -11,41 +11,51 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-	destroyTestDb(sqlite);
+	destroyTestDb(sqlite, TEST_DB_PATH);
 });
 
 describe('Schema', () => {
-	it('should have user table', () => {
-		const result = sqlite.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='user'");
-		expect(result).toBeTruthy();
+	it('should have all five tables with correct schema', () => {
+		const tables = sqlite
+			.prepare(
+				"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+			)
+			.all() as Array<{ name: string }>;
+		const tableNames = tables.map((t) => t.name);
+		expect(tableNames).toContain('user');
+		expect(tableNames).toContain('session');
+		expect(tableNames).toContain('exercise_type');
+		expect(tableNames).toContain('workout_session');
+		expect(tableNames).toContain('set_entry');
 	});
 
-	it('should have session table', () => {
-		const result = sqlite.exec(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='session'"
-		);
-		expect(result).toBeTruthy();
+	it('should have user table with expected columns', () => {
+		const columns = sqlite.prepare("PRAGMA table_info('user')").all() as Array<{ name: string }>;
+		const columnNames = columns.map((c) => c.name);
+		expect(columnNames).toContain('id');
+		expect(columnNames).toContain('username');
+		expect(columnNames).toContain('password_hash');
+		expect(columnNames).toContain('locale');
+		expect(columnNames).toContain('theme');
+		expect(columnNames).toContain('created_at');
 	});
 
-	it('should have exercise_type table', () => {
-		const result = sqlite.exec(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='exercise_type'"
-		);
-		expect(result).toBeTruthy();
+	it('should have unique constraint on user.username', () => {
+		const indexes = sqlite.prepare("PRAGMA index_list('user')").all() as Array<{
+			name: string;
+			unique: number;
+		}>;
+		const uniqueIndexes = indexes.filter((i) => i.unique === 1);
+		expect(uniqueIndexes.length).toBeGreaterThan(0);
 	});
 
-	it('should have workout_session table', () => {
-		const result = sqlite.exec(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='workout_session'"
-		);
-		expect(result).toBeTruthy();
-	});
-
-	it('should have set_entry table', () => {
-		const result = sqlite.exec(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='set_entry'"
-		);
-		expect(result).toBeTruthy();
+	it('should have unique constraint on workout_session (user_id, exercise_type_id, workout_date)', () => {
+		const indexes = sqlite.prepare("PRAGMA index_list('workout_session')").all() as Array<{
+			name: string;
+			unique: number;
+		}>;
+		const uniqueIndexes = indexes.filter((i) => i.unique === 1);
+		expect(uniqueIndexes.length).toBeGreaterThan(0);
 	});
 });
 

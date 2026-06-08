@@ -10,8 +10,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, '/login');
 	}
 
-	const exerciseId = Number(params.id);
-	if (isNaN(exerciseId)) {
+	const exerciseId = parseInt(params.id, 10);
+	if (isNaN(exerciseId) || exerciseId <= 0) {
 		throw redirect(303, '/exercises');
 	}
 
@@ -117,8 +117,8 @@ export const actions: Actions = {
 			throw redirect(303, '/login');
 		}
 
-		const exerciseId = Number(params.id);
-		if (isNaN(exerciseId)) {
+		const exerciseId = parseInt(params.id, 10);
+		if (isNaN(exerciseId) || exerciseId <= 0) {
 			return fail(400, { error: 'Invalid exercise ID' });
 		}
 
@@ -229,8 +229,6 @@ export const actions: Actions = {
 					created_at: nowISO
 				})
 				.run();
-
-			return ws;
 		});
 
 		throw redirect(303, `/exercises/${exerciseId}`);

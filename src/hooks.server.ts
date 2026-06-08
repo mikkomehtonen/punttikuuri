@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { getSessionUser, VALID_LOCALES, VALID_THEMES } from '$lib/server/auth';
 
 const protectedRoutes = ['/exercises', '/settings'] as const;
@@ -28,17 +29,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isAuth = isAuthRoute(pathname);
 
 	if (!user && isProtected) {
-		return new Response(null, {
-			status: 302,
-			headers: { location: '/login' }
-		});
+		throw redirect(302, '/login');
 	}
 
 	if (user && isAuth) {
-		return new Response(null, {
-			status: 302,
-			headers: { location: '/exercises' }
-		});
+		throw redirect(302, '/exercises');
 	}
 
 	const rawLocale = user?.locale ?? event.cookies.get('locale') ?? 'en';

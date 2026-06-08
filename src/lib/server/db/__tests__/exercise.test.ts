@@ -29,7 +29,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-	destroyTestDb(sqlite);
+	destroyTestDb(sqlite, TEST_DB_PATH);
 });
 
 describe('Exercise Type Management', () => {

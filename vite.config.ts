@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
+import { pwaManifest } from './src/lib/pwa-manifest';
 
 export default defineConfig({
 	plugins: [
@@ -10,24 +11,7 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			includeAssets: ['favicon.svg'],
-			manifest: {
-				name: 'Punttikuuri',
-				short_name: 'Punttikuuri',
-				description: 'Gym Workout Logger',
-				theme_color: '#2563eb',
-				background_color: '#ffffff',
-				display: 'standalone',
-				scope: '/',
-				start_url: '/exercises',
-				icons: [
-					{
-						src: 'favicon.svg',
-						sizes: 'any',
-						type: 'image/svg+xml',
-						purpose: 'any maskable'
-					}
-				]
-			},
+			manifest: pwaManifest,
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,svg,png,ico,json}']
 			}
