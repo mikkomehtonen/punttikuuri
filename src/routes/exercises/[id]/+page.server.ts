@@ -53,7 +53,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.all();
 	}
 
-	// Get previous workout sessions with their sets in one query
 	const previousSessionsData = db
 		.select({
 			sessionId: workoutSession.id,
@@ -74,23 +73,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.orderBy(desc(workoutSession.workout_date), asc(setEntry.set_number))
 		.all();
 
-	// Group sets by session
 	const sessionMap = new Map<
-		string,
+		number,
 		{
 			workout_date: string;
 			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
 		}
 	>();
 	for (const row of previousSessionsData) {
-		if (!sessionMap.has(row.sessionId)) {
-			sessionMap.set(row.sessionId, {
+		const sessionId = row.sessionId;
+		if (!sessionMap.has(sessionId)) {
+			sessionMap.set(sessionId, {
 				workout_date: row.workout_date,
 				sets: []
 			});
 		}
 		if (row.set_number !== null) {
-			sessionMap.get(row.sessionId)!.sets.push({
+			sessionMap.get(sessionId)!.sets.push({
 				set_number: row.set_number,
 				weight_kg: row.weight_kg!,
 				repetitions: row.repetitions!
@@ -123,8 +122,8 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const weightKgStr = (formData.get('weight_kg') as string) ?? '';
-		const repetitionsStr = (formData.get('repetitions') as string) ?? '';
+		const weightKgStr = String(formData.get('weight_kg') ?? '');
+		const repetitionsStr = String(formData.get('repetitions') ?? '');
 
 		const weightKg = parseFloat(weightKgStr);
 		const repetitions = parseInt(repetitionsStr, 10);
@@ -142,53 +141,76 @@ export const actions: Actions = {
 			return fail(400, { error: 'Reps must be a positive whole number' });
 		}
 
+		const userId = locals.user.id;
 		const today = new Date().toISOString().slice(0, 10);
 		const nowISO = new Date().toISOString();
 
-		// Find or create workout session for today
-		let ws = db
-			.select()
-			.from(workoutSession)
-			.where(
-				and(
-					eq(workoutSession.exercise_type_id, exerciseId),
-					eq(workoutSession.workout_date, today),
-					eq(workoutSession.user_id, locals.user.id)
+		// Use a transaction to atomically find-or-create session and insert set
+		db.transaction(() => {
+			// Find existing workout session for today
+			let ws = db
+				.select()
+				.from(workoutSession)
+				.where(
+					and(
+						eq(workoutSession.exercise_type_id, exerciseId),
+						eq(workoutSession.workout_date, today),
+						eq(workoutSession.user_id, userId)
+					)
 				)
-			)
-			.get();
+				.get();
 
-		if (!ws) {
-			ws = db
-				.insert(workoutSession)
+			// Create if not found (with retry in case of concurrent insert)
+			if (!ws) {
+				try {
+					ws = db
+						.insert(workoutSession)
+						.values({
+							user_id: userId,
+							exercise_type_id: exerciseId,
+							workout_date: today,
+							created_at: nowISO
+						})
+						.returning()
+						.get();
+				} catch {
+					// UNIQUE constraint violation — another request created it first
+					ws = db
+						.select()
+						.from(workoutSession)
+						.where(
+							and(
+								eq(workoutSession.exercise_type_id, exerciseId),
+								eq(workoutSession.workout_date, today),
+								eq(workoutSession.user_id, userId)
+							)
+						)
+						.get();
+					if (!ws) throw new Error('Failed to create or find workout session');
+				}
+			}
+
+			// Get next set number atomically within the transaction
+			const maxSet = db
+				.select({ max: sql<number>`COALESCE(MAX(${setEntry.set_number}), 0)` })
+				.from(setEntry)
+				.where(eq(setEntry.workout_session_id, ws.id))
+				.get();
+
+			const nextSetNumber = (maxSet?.max ?? 0) + 1;
+
+			db.insert(setEntry)
 				.values({
-					user_id: locals.user.id,
-					exercise_type_id: exerciseId,
-					workout_date: today,
+					workout_session_id: ws.id,
+					set_number: nextSetNumber,
+					weight_kg: weightKg,
+					repetitions,
 					created_at: nowISO
 				})
-				.returning()
-				.get();
-		}
+				.run();
 
-		// Get next set number
-		const maxSet = db
-			.select({ max: sql<number>`COALESCE(MAX(${setEntry.set_number}), 0)` })
-			.from(setEntry)
-			.where(eq(setEntry.workout_session_id, ws.id))
-			.get();
-
-		const nextSetNumber = (maxSet?.max ?? 0) + 1;
-
-		db.insert(setEntry)
-			.values({
-				workout_session_id: ws.id,
-				set_number: nextSetNumber,
-				weight_kg: weightKg,
-				repetitions,
-				created_at: nowISO
-			})
-			.run();
+			return ws;
+		});
 
 		throw redirect(303, `/exercises/${exerciseId}`);
 	}

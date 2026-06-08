@@ -9,8 +9,8 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const formData = await request.formData();
-		const username = (formData.get('username') as string) ?? '';
-		const password = (formData.get('password') as string) ?? '';
+		const username = String(formData.get('username') ?? '');
+		const password = String(formData.get('password') ?? '');
 
 		const result = loginUser({ username, password });
 

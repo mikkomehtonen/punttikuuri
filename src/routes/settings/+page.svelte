@@ -6,10 +6,9 @@
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
 	const locale = $derived(data.locale as Locale);
-	const { currentLocale, currentTheme } = data;
 
-	let selectedLocale = $state(currentLocale as string);
-	let selectedTheme = $state(currentTheme as string);
+	let selectedLocale = $state(data.currentLocale);
+	let selectedTheme = $state(data.currentTheme);
 </script>
 
 <svelte:head>

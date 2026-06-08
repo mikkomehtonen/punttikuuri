@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { db as defaultDb } from './db';
 import * as schema from './db/schema';
@@ -19,6 +20,10 @@ function generateId(): string {
 	return Array.from(bytes)
 		.map((b) => b.toString(16).padStart(2, '0'))
 		.join('');
+}
+
+function hashToken(token: string): string {
+	return createHash('sha256').update(token).digest('hex');
 }
 
 function nowISO(): string {
@@ -70,7 +75,7 @@ export type RegisterOutcome = RegisterResult | RegisterError;
 
 export function registerUser(
 	input: RegisterInput,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): RegisterOutcome {
 	const usernameError = validateUsername(input.username);
 	if (usernameError) {
@@ -82,7 +87,7 @@ export function registerUser(
 		return { ok: false, error: passwordError, field: 'password' };
 	}
 
-	const existing = db.select().from(user).where(eq(user.username, input.username)).get();
+	const existing = dbArg.select().from(user).where(eq(user.username, input.username)).get();
 	if (existing) {
 		return { ok: false, error: 'Username already taken', field: 'username' };
 	}
@@ -92,7 +97,7 @@ export function registerUser(
 
 	let newUser: typeof user.$inferSelect;
 	try {
-		newUser = db
+		newUser = dbArg
 			.insert(user)
 			.values({
 				username: input.username,
@@ -116,11 +121,13 @@ export function registerUser(
 	}
 
 	const sessionToken = generateId();
+	const sessionHash = hashToken(sessionToken);
 	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
 
-	db.insert(session)
+	dbArg
+		.insert(session)
 		.values({
-			id: sessionToken,
+			id: sessionHash,
 			user_id: newUser.id,
 			expires_at: expiresAt,
 			created_at: createdAt
@@ -159,9 +166,9 @@ export type LoginOutcome = LoginResult | LoginError;
 
 export function loginUser(
 	input: LoginInput,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): LoginOutcome {
-	const existing = db.select().from(user).where(eq(user.username, input.username)).get();
+	const existing = dbArg.select().from(user).where(eq(user.username, input.username)).get();
 	if (!existing) {
 		return { ok: false, error: 'Invalid username or password' };
 	}
@@ -171,12 +178,14 @@ export function loginUser(
 	}
 
 	const sessionToken = generateId();
+	const sessionHash = hashToken(sessionToken);
 	const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
 	const createdAt = nowISO();
 
-	db.insert(session)
+	dbArg
+		.insert(session)
 		.values({
-			id: sessionToken,
+			id: sessionHash,
 			user_id: existing.id,
 			expires_at: expiresAt,
 			created_at: createdAt
@@ -196,10 +205,11 @@ export function loginUser(
 }
 
 export function getSessionUser(
-	sessionId: string,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	sessionToken: string,
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): AuthUser | null {
-	const row = db
+	const sessionHash = hashToken(sessionToken);
+	const row = dbArg
 		.select({
 			user: {
 				id: user.id,
@@ -211,7 +221,7 @@ export function getSessionUser(
 		})
 		.from(session)
 		.innerJoin(user, eq(session.user_id, user.id))
-		.where(eq(session.id, sessionId))
+		.where(eq(session.id, sessionHash))
 		.get();
 
 	if (!row) return null;
@@ -219,7 +229,7 @@ export function getSessionUser(
 	const now = new Date();
 	const expiresAt = new Date(row.sessionExpiresAt);
 	if (now > expiresAt) {
-		db.delete(session).where(eq(session.id, sessionId)).run();
+		dbArg.delete(session).where(eq(session.id, sessionHash)).run();
 		return null;
 	}
 
@@ -227,40 +237,43 @@ export function getSessionUser(
 }
 
 export function deleteSession(
-	sessionId: string,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	sessionToken: string,
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): void {
-	db.delete(session).where(eq(session.id, sessionId)).run();
+	const sessionHash = hashToken(sessionToken);
+	dbArg.delete(session).where(eq(session.id, sessionHash)).run();
 }
 
 export function updateUserLocale(
 	userId: number,
 	locale: ValidLocale,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): void {
-	db.update(user).set({ locale }).where(eq(user.id, userId)).run();
+	dbArg.update(user).set({ locale }).where(eq(user.id, userId)).run();
 }
 
 export function updateUserTheme(
 	userId: number,
 	theme: ValidTheme,
-	db: BetterSQLite3Database<typeof schema> = defaultDb
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): void {
-	db.update(user).set({ theme }).where(eq(user.id, userId)).run();
+	dbArg.update(user).set({ theme }).where(eq(user.id, userId)).run();
 }
 
-const COOKIE_OPTIONS = {
-	httpOnly: true as const,
+const COOKIE_BASE = {
 	sameSite: 'lax' as const,
 	path: '/',
 	maxAge: 60 * 60 * 24 * 30 // 30 days
 };
 
+const COOKIE_OPTIONS = {
+	...COOKIE_BASE,
+	httpOnly: true as const
+};
+
 const PUBLIC_COOKIE_OPTIONS = {
-	httpOnly: false as const,
-	sameSite: 'lax' as const,
-	path: '/',
-	maxAge: 60 * 60 * 24 * 30
+	...COOKIE_BASE,
+	httpOnly: false as const
 };
 
 export function setAuthCookies(

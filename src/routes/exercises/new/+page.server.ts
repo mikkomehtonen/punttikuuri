@@ -14,9 +14,9 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const name = ((formData.get('name') as string) ?? '').trim();
-		const shortName = ((formData.get('short_name') as string) ?? '').trim() || null;
-		const displayOrderStr = (formData.get('display_order') as string) ?? '';
+		const name = String(formData.get('name') ?? '').trim();
+		const shortName = String(formData.get('short_name') ?? '').trim() || null;
+		const displayOrderStr = String(formData.get('display_order') ?? '');
 
 		if (!name || name.length > 100) {
 			return fail(400, { error: 'Exercise name is required (max 100 characters)' });

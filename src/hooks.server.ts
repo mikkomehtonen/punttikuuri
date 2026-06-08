@@ -1,5 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
-import { getSessionUser } from '$lib/server/auth';
+import { getSessionUser, VALID_LOCALES, VALID_THEMES } from '$lib/server/auth';
 
 const protectedRoutes = ['/exercises', '/settings'];
 const authRoutes = ['/login', '/register'];
@@ -35,8 +35,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	const locale = user?.locale ?? event.cookies.get('locale') ?? 'en';
-	const theme = user?.theme ?? event.cookies.get('theme') ?? 'system';
+	const rawLocale = user?.locale ?? event.cookies.get('locale') ?? 'en';
+	const rawTheme = user?.theme ?? event.cookies.get('theme') ?? 'system';
+
+	const locale = VALID_LOCALES.includes(rawLocale as never) ? rawLocale : 'en';
+	const theme = VALID_THEMES.includes(rawTheme as never) ? rawTheme : 'system';
 
 	event.locals.locale = locale as 'en' | 'fi';
 	event.locals.theme = theme;

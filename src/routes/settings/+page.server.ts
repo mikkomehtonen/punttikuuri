@@ -20,8 +20,8 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const locale = (formData.get('locale') as string) ?? 'en';
-		const theme = (formData.get('theme') as string) ?? 'system';
+		const locale = String(formData.get('locale') ?? 'en');
+		const theme = String(formData.get('theme') ?? 'system');
 
 		if (!VALID_LOCALES.includes(locale as never)) {
 			return fail(400, { error: 'Invalid locale' });
@@ -40,7 +40,6 @@ export const actions: Actions = {
 			path: '/',
 			maxAge: 60 * 60 * 24 * 30
 		});
-
 		cookies.set('theme', theme, {
 			httpOnly: false,
 			sameSite: 'lax',

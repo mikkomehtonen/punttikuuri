@@ -20,6 +20,9 @@ Thumbs.db
 
 # Database
 data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
 
 # Vite
 vite.config.js.timestamp-*
