@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../schema';
-import { eq, asc, sql } from 'drizzle-orm';
+import { eq, asc, sql, and } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { registerUser } from '../../auth';
 import { exerciseType, workoutSession, setEntry } from '../schema';
@@ -403,7 +403,9 @@ describe('Workout Logging', () => {
 		const userBSessions = db
 			.select()
 			.from(workoutSession)
-			.where(eq(workoutSession.exercise_type_id, exerciseId) && eq(workoutSession.user_id, userIdB))
+			.where(
+				and(eq(workoutSession.exercise_type_id, exerciseId), eq(workoutSession.user_id, userIdB))
+			)
 			.all();
 
 		expect(userBSessions).toHaveLength(0);

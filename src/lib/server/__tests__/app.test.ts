@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateUsername, validatePassword } from '../auth';
 import { isProtectedRoute, isAuthRoute } from '../../../hooks.server';
+import { validateWeight, validateReps } from '../workout-validation';
 
 describe('Task 1 - Project Scaffolding & Database Setup', () => {
 	it('should have data/*.db in .gitignore', () => {
@@ -85,25 +86,7 @@ describe('Task 2/3 - Auth validation functions (exercised by register action)', 
 	});
 });
 
-describe('Task 4 - Workout validation', () => {
-	// These tests validate the logic used in the action handler at
-	// src/routes/exercises/[id]/+page.server.ts
-	function validateWeight(weightStr: string): string | null {
-		const weightKg = parseFloat(weightStr);
-		if (!weightStr || isNaN(weightKg) || weightKg <= 0) {
-			return 'Weight must be a positive number';
-		}
-		return null;
-	}
-
-	function validateReps(repsStr: string): string | null {
-		const repsNum = Number(repsStr);
-		if (!repsStr || isNaN(repsNum) || repsNum <= 0 || !Number.isInteger(repsNum)) {
-			return 'Reps must be a positive whole number';
-		}
-		return null;
-	}
-
+describe('Task 4 - Workout validation (imported from production code)', () => {
 	it('should accept valid weight and reps', () => {
 		expect(validateWeight('100')).toBeNull();
 		expect(validateReps('5')).toBeNull();
@@ -123,6 +106,11 @@ describe('Task 4 - Workout validation', () => {
 
 	it('should reject non-numeric weight', () => {
 		expect(validateWeight('abc')).not.toBeNull();
+	});
+
+	it('should reject partially-numeric weight (e.g. 5abc)', () => {
+		// Number('5abc') returns NaN, so this is properly rejected
+		expect(validateWeight('5abc')).not.toBeNull();
 	});
 
 	it('should reject non-numeric reps', () => {

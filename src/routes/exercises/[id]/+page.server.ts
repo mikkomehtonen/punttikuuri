@@ -3,6 +3,7 @@ import { eq, desc, asc, and, sql } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
+import { validateWeight, validateReps } from '$lib/server/workout-validation';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.user) {
@@ -125,18 +126,18 @@ export const actions: Actions = {
 		const weightKgStr = String(formData.get('weight_kg') ?? '');
 		const repetitionsStr = String(formData.get('repetitions') ?? '');
 
-		const weightKg = parseFloat(weightKgStr);
-		const repsNum = Number(repetitionsStr);
-
-		if (!weightKgStr || isNaN(weightKg) || weightKg <= 0) {
-			return fail(400, { error: 'Weight must be a positive number' });
+		const weightError = validateWeight(weightKgStr);
+		if (weightError) {
+			return fail(400, { error: weightError });
 		}
 
-		if (!repetitionsStr || isNaN(repsNum) || repsNum <= 0 || !Number.isInteger(repsNum)) {
-			return fail(400, { error: 'Reps must be a positive whole number' });
+		const repsError = validateReps(repetitionsStr);
+		if (repsError) {
+			return fail(400, { error: repsError });
 		}
 
-		const repetitions = repsNum;
+		const weightKg = Number(weightKgStr);
+		const repetitions = Number(repetitionsStr);
 
 		const userId = locals.user.id;
 		const today = new Date().toISOString().slice(0, 10);

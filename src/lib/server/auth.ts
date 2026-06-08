@@ -271,7 +271,7 @@ const COOKIE_OPTIONS = {
 	httpOnly: true as const
 };
 
-const PUBLIC_COOKIE_OPTIONS = {
+export const PUBLIC_COOKIE_OPTIONS = {
 	...COOKIE_BASE,
 	httpOnly: false as const
 };

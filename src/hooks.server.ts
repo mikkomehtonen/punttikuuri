@@ -44,8 +44,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const rawLocale = user?.locale ?? event.cookies.get('locale') ?? 'en';
 	const rawTheme = user?.theme ?? event.cookies.get('theme') ?? 'system';
 
-	const locale = VALID_LOCALES.includes(rawLocale as never) ? rawLocale : 'en';
-	const theme = VALID_THEMES.includes(rawTheme as never) ? rawTheme : 'system';
+	const locale = (VALID_LOCALES as readonly string[]).includes(rawLocale) ? rawLocale : 'en';
+	const theme = (VALID_THEMES as readonly string[]).includes(rawTheme) ? rawTheme : 'system';
 
 	event.locals.locale = locale as 'en' | 'fi';
 	event.locals.theme = theme;
