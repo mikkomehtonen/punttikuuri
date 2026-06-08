@@ -1,8 +1,16 @@
 import type { Handle } from '@sveltejs/kit';
 import { getSessionUser, VALID_LOCALES, VALID_THEMES } from '$lib/server/auth';
 
-const protectedRoutes = ['/exercises', '/settings'];
-const authRoutes = ['/login', '/register'];
+const protectedRoutes = ['/exercises', '/settings'] as const;
+const authRoutes = ['/login', '/register'] as const;
+
+export function isProtectedRoute(pathname: string): boolean {
+	return protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+}
+
+export function isAuthRoute(pathname: string): boolean {
+	return authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get('session_id');
@@ -16,10 +24,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const pathname = event.url.pathname;
 
-	const isProtected = protectedRoutes.some(
-		(route) => pathname === route || pathname.startsWith(route + '/')
-	);
-	const isAuth = authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+	const isProtected = isProtectedRoute(pathname);
+	const isAuth = isAuthRoute(pathname);
 
 	if (!user && isProtected) {
 		return new Response(null, {

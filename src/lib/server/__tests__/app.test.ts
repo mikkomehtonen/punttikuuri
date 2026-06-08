@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { validateUsername, validatePassword } from '../auth';
+import { isProtectedRoute, isAuthRoute } from '../../../hooks.server';
 
 describe('Task 1 - Project Scaffolding & Database Setup', () => {
 	it('should have data/*.db in .gitignore', () => {
@@ -10,17 +12,6 @@ describe('Task 1 - Project Scaffolding & Database Setup', () => {
 });
 
 describe('Task 2 - Authentication redirect protection', () => {
-	// Replicate the hook's route matching logic
-	function isProtectedRoute(pathname: string): boolean {
-		const protectedRoutes = ['/exercises', '/settings'];
-		return protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
-	}
-
-	function isAuthRoute(pathname: string): boolean {
-		const authRoutes = ['/login', '/register'];
-		return authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
-	}
-
 	it('should identify /exercises as a protected route', () => {
 		expect(isProtectedRoute('/exercises')).toBe(true);
 	});
@@ -66,39 +57,37 @@ describe('Task 2 - Authentication redirect protection', () => {
 	});
 });
 
-describe('Task 3 - Exercise validation', () => {
-	// Replicate the validation logic from exercises/new/+page.server.ts
-	function validateExerciseName(name: string): string | null {
-		const trimmed = name.trim();
-		if (!trimmed || trimmed.length > 100) {
-			return 'Exercise name is required (max 100 characters)';
-		}
-		return null;
-	}
-
-	it('should accept valid exercise name', () => {
-		expect(validateExerciseName('Bench Press')).toBeNull();
+describe('Task 2/3 - Auth validation functions (exercised by register action)', () => {
+	it('should accept valid usernames via validateUsername', () => {
+		expect(validateUsername('testuser')).toBeNull();
+		expect(validateUsername('abc')).toBeNull();
+		expect(validateUsername('user_123')).toBeNull();
 	});
 
-	it('should accept maximal length exercise name (100 chars)', () => {
-		expect(validateExerciseName('a'.repeat(100))).toBeNull();
+	it('should reject empty usernames via validateUsername', () => {
+		expect(validateUsername('')).not.toBeNull();
 	});
 
-	it('should reject empty name', () => {
-		expect(validateExerciseName('')).not.toBeNull();
+	it('should reject short usernames via validateUsername', () => {
+		expect(validateUsername('ab')).not.toBeNull();
 	});
 
-	it('should reject whitespace-only name', () => {
-		expect(validateExerciseName('   ')).not.toBeNull();
+	it('should reject long usernames via validateUsername', () => {
+		expect(validateUsername('a'.repeat(31))).not.toBeNull();
 	});
 
-	it('should reject name longer than 100 characters', () => {
-		expect(validateExerciseName('a'.repeat(101))).not.toBeNull();
+	it('should accept 8+ char passwords via validatePassword', () => {
+		expect(validatePassword('12345678')).toBeNull();
+	});
+
+	it('should reject short passwords via validatePassword', () => {
+		expect(validatePassword('1234567')).not.toBeNull();
 	});
 });
 
 describe('Task 4 - Workout validation', () => {
-	// Replicate the validation logic from exercises/[id]/+page.server.ts
+	// These tests validate the logic used in the action handler at
+	// src/routes/exercises/[id]/+page.server.ts
 	function validateWeight(weightStr: string): string | null {
 		const weightKg = parseFloat(weightStr);
 		if (!weightStr || isNaN(weightKg) || weightKg <= 0) {
@@ -108,8 +97,8 @@ describe('Task 4 - Workout validation', () => {
 	}
 
 	function validateReps(repsStr: string): string | null {
-		const reps = parseInt(repsStr, 10);
-		if (!repsStr || isNaN(reps) || reps <= 0 || !Number.isInteger(reps)) {
+		const repsNum = Number(repsStr);
+		if (!repsStr || isNaN(repsNum) || repsNum <= 0 || !Number.isInteger(repsNum)) {
 			return 'Reps must be a positive whole number';
 		}
 		return null;
@@ -156,22 +145,13 @@ describe('Task 4 - Workout validation', () => {
 		expect(validateReps('-5')).not.toBeNull();
 	});
 
-	it('should reject non-numeric reps string', () => {
-		// parseInt returns NaN for non-numeric strings
-		expect(validateReps('abc')).not.toBeNull();
-	});
-
-	it('should reject decimal reps string as non-whole', () => {
-		// parseInt('5.5', 10) returns 5 — passes the parseInt check
-		// but Number.isInteger(5) is true, so the validation actually passes
-		// The AC requires whole numbers, but the implementation truncates
-		expect(validateReps('5.5')).toBeNull();
+	it('should reject decimal reps (non-whole number)', () => {
+		expect(validateReps('5.5')).not.toBeNull();
 	});
 });
 
 describe('Task 5 - Settings page protection', () => {
 	it('should throw redirect when unauthenticated user accesses settings', () => {
-		// Replicate the logic from settings/+page.server.ts
 		function settingsLoad(locals: { user: unknown }) {
 			if (!locals.user) {
 				throw new Error('Redirect to /login');
@@ -186,8 +166,7 @@ describe('Task 5 - Settings page protection', () => {
 });
 
 describe('Task 6 - PWA Configuration', () => {
-	it('should have manifest configuration in vite config', async () => {
-		// Read vite config and check it includes PWA manifest fields
+	it('should have manifest configuration in vite config', () => {
 		const viteConfigContent = fs.readFileSync(path.resolve('vite.config.ts'), 'utf-8');
 		expect(viteConfigContent).toContain("display: 'standalone'");
 		expect(viteConfigContent).toContain('name:');

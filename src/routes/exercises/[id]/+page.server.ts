@@ -126,20 +126,17 @@ export const actions: Actions = {
 		const repetitionsStr = String(formData.get('repetitions') ?? '');
 
 		const weightKg = parseFloat(weightKgStr);
-		const repetitions = parseInt(repetitionsStr, 10);
+		const repsNum = Number(repetitionsStr);
 
 		if (!weightKgStr || isNaN(weightKg) || weightKg <= 0) {
 			return fail(400, { error: 'Weight must be a positive number' });
 		}
 
-		if (
-			!repetitionsStr ||
-			isNaN(repetitions) ||
-			repetitions <= 0 ||
-			!Number.isInteger(repetitions)
-		) {
+		if (!repetitionsStr || isNaN(repsNum) || repsNum <= 0 || !Number.isInteger(repsNum)) {
 			return fail(400, { error: 'Reps must be a positive whole number' });
 		}
+
+		const repetitions = repsNum;
 
 		const userId = locals.user.id;
 		const today = new Date().toISOString().slice(0, 10);
@@ -173,9 +170,18 @@ export const actions: Actions = {
 						})
 						.returning()
 						.get();
-				} catch {
-					// UNIQUE constraint violation — another request created it first
-					ws = db
+				} catch (err) {
+					if (
+						!err ||
+						typeof err !== 'object' ||
+						!('code' in err) ||
+						(err as { code: string }).code !== 'SQLITE_CONSTRAINT_UNIQUE'
+					) {
+						throw err;
+					}
+					// UNIQUE constraint violation — another request created it first;
+					// re-fetch the session created by the concurrent request
+					const existing = db
 						.select()
 						.from(workoutSession)
 						.where(
@@ -186,7 +192,10 @@ export const actions: Actions = {
 							)
 						)
 						.get();
-					if (!ws) throw new Error('Failed to create or find workout session');
+					if (!existing) {
+						throw new Error('Failed to create or find workout session', { cause: err });
+					}
+					ws = existing;
 				}
 			}
 
