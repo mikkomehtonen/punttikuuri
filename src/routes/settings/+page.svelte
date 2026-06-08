@@ -3,9 +3,10 @@
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const locale = $derived(data.locale as Locale);
+	const saved = $derived(data.saved);
 
 	let selectedLocale = $state(data.currentLocale);
 	let selectedTheme = $state(data.currentTheme);
@@ -17,7 +18,7 @@
 
 <h1 class="mb-6 text-2xl font-bold">{t('settings.title', locale)}</h1>
 
-{#if form?.saved}
+{#if saved}
 	<div
 		class="mb-4 rounded-lg bg-green-100 p-3 text-green-700 dark:bg-green-900/30 dark:text-green-300"
 	>

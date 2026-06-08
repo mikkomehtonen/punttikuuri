@@ -151,8 +151,9 @@ export const actions: Actions = {
 		const repetitions = Number(repetitionsStr);
 
 		const userId = locals.user.id;
-		const today = new Date().toISOString().slice(0, 10);
-		const nowISO = new Date().toISOString();
+		const now = new Date();
+		const today = now.toISOString().slice(0, 10);
+		const nowISO = now.toISOString();
 
 		// Use a transaction to atomically find-or-create session and insert set
 		db.transaction((tx) => {

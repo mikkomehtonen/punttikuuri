@@ -6,6 +6,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 	return {
 		currentLocale: 'en',
 		currentTheme: 'system',
+		saved: false,
 		locale: 'en' as const,
 		theme: 'system',
 		user: { id: 1, username: 'test', locale: 'en', theme: 'system' },
@@ -16,7 +17,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 describe('Settings Page', () => {
 	it('should display settings form with language and theme options', () => {
 		const { body } = render(SettingsPage, {
-			props: { data: makeData({ currentLocale: 'fi', currentTheme: 'dark' }), form: null }
+			props: { data: makeData({ currentLocale: 'fi', currentTheme: 'dark' }) }
 		});
 
 		expect(body).toContain('Settings');
@@ -30,9 +31,7 @@ describe('Settings Page', () => {
 	});
 
 	it('should have all three theme options', () => {
-		const { body } = render(SettingsPage, {
-			props: { data: makeData(), form: null }
-		});
+		const { body } = render(SettingsPage, { props: { data: makeData() } });
 
 		expect(body).toContain('Light');
 		expect(body).toContain('Dark');
@@ -40,25 +39,21 @@ describe('Settings Page', () => {
 	});
 
 	it('should have both locale options', () => {
-		const { body } = render(SettingsPage, {
-			props: { data: makeData(), form: null }
-		});
+		const { body } = render(SettingsPage, { props: { data: makeData() } });
 
 		expect(body).toContain('English');
 		expect(body).toContain('Suomi');
 	});
 
 	it('should have a save button', () => {
-		const { body } = render(SettingsPage, {
-			props: { data: makeData(), form: null }
-		});
+		const { body } = render(SettingsPage, { props: { data: makeData() } });
 
 		expect(body).toContain('Save');
 	});
 
-	it('should show saved confirmation when form.saved is true', () => {
+	it('should show saved confirmation when saved is true', () => {
 		const { body } = render(SettingsPage, {
-			props: { data: makeData(), form: { saved: true } }
+			props: { data: makeData({ saved: true }) }
 		});
 
 		expect(body).toContain('Settings saved');
@@ -67,8 +62,7 @@ describe('Settings Page', () => {
 	it('should display Finnish translations when locale is fi', () => {
 		const { body } = render(SettingsPage, {
 			props: {
-				data: makeData({ locale: 'fi', currentLocale: 'fi', currentTheme: 'system' }),
-				form: null
+				data: makeData({ locale: 'fi', currentLocale: 'fi', currentTheme: 'system' })
 			}
 		});
 

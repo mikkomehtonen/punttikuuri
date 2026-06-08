@@ -14,6 +14,14 @@ export const VALID_THEMES = ['light', 'dark', 'system'] as const;
 export type ValidLocale = (typeof VALID_LOCALES)[number];
 export type ValidTheme = (typeof VALID_THEMES)[number];
 
+export function isValidLocale(value: string): value is ValidLocale {
+	return (VALID_LOCALES as readonly string[]).includes(value);
+}
+
+export function isValidTheme(value: string): value is ValidTheme {
+	return (VALID_THEMES as readonly string[]).includes(value);
+}
+
 function generateId(): string {
 	const bytes = new Uint8Array(16);
 	crypto.getRandomValues(bytes);
