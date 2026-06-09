@@ -1,42 +1,45 @@
-# sv
+# Punttikuuri
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Mobile-first gym workout logging app. Log sets (weight + reps) during training and review previous performance. Self-hosted on a home server via Tailscale, supporting multiple household users with separated data. Bilingual UI (English/Finnish) with dark/light theme, installable as a PWA.
 
-## Creating a project
+## Tech Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.15.4 create --template minimal --types ts --add prettier eslint vitest="usages:unit" tailwindcss="plugins:none" sveltekit-adapter="adapter:node" --no-install /tmp/punttikuuri-scaffold
-```
+- **SvelteKit** (Svelte 5, runes mode) with Node adapter
+- **Tailwind CSS 4**
+- **SQLite** via better-sqlite3 + Drizzle ORM
+- **Vitest** + Testing Library
+- **PWA** via vite-plugin-pwa
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
 ```sh
+npm install
+npm run db:migrate
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
 ## Building
 
-To create a production version of your app:
-
 ```sh
 npm run build
+npm run preview
 ```
 
-You can preview the production build with `npm run preview`.
+## Database
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+SQLite database lives at `./data/punttikuuri.db`.
+
+```sh
+npm run db:generate   # generate migrations from schema changes
+npm run db:migrate    # apply migrations
+npm run db:studio     # open Drizzle Studio
+```
+
+## Testing
+
+```sh
+npm run test          # run all unit tests
+npm run test:unit     # run in watch mode
+npm run check         # typecheck
+npm run lint          # prettier + eslint
+```
