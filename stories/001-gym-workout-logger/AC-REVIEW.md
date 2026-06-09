@@ -4,7 +4,15 @@
 
 **Lint:** Pass — prettier and eslint clean
 **Tests:** 138 passed, 0 failed, 0 skipped
-**Typecheck:** Pass — 0 errors, 2 warnings (state_referenced_locally in settings page, non-breaking)
+**Typecheck:** **Fail** — 2 errors, 2 warnings
+
+Type errors:
+- `src/routes/exercises/[id]/+page.server.ts:33:32` — `'locals.user' is possibly 'null'`
+- `src/routes/exercises/[id]/+page.server.ts:66:32` — `'locals.user' is possibly 'null'`
+
+Warnings (non-breaking):
+- `src/routes/settings/+page.svelte:11:30` — state_referenced_locally for `data.currentLocale`
+- `src/routes/settings/+page.svelte:12:29` — state_referenced_locally for `data.currentTheme`
 
 ## Coverage Summary
 
@@ -17,7 +25,7 @@ AC 4: `data/*.db` is listed in `.gitignore` → **Tested** — `"should have dat
 AC 5: Tailwind CSS v4 configured with dark-mode class strategy → **Tested** — `"should have Tailwind CSS v4 configured with dark mode class strategy"` (app.test.ts:35), `"should have dark mode styles in layout using dark: variant"` (app.test.ts:40), `"should have dark mode styles that activate via dark class on html element"` (app.test.ts:64)
 AC 6: Vitest runs and a passing smoke test exists → **Tested** — `"should pass"` (schema.test.ts:63), full suite exits 0
 
-Coverage: 4 Tested + 2 Manual = 6 / 6 — min required: floor(0.9×6)=5 — **Pass**
+Coverage: 4 Tested + 2 Manual = 6 / 6 — min required: floor(0.9×6)=5 — Pass
 
 ### Task 2 — Authentication System: Pass
 
@@ -30,7 +38,7 @@ AC 6: authenticated user + logout → session deleted, cookie cleared, redirect 
 AC 7: unauthenticated user + navigates to /exercises → redirect to /login → **Tested** — `"should redirect unauthenticated user from protected route to /login"` (app.test.ts:349)
 AC 8: authenticated user + navigates to /login → redirect to /exercises → **Partially tested** — `"should redirect authenticated user from /login to /exercises"` (app.test.ts:378) tests route classification (isAuthRoute/isProtectedRoute) but does not invoke `handle()` with an authenticated user to verify the actual redirect
 
-Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — **Pass**
+Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — Pass
 
 ### Task 3 — Exercise Type Management: Pass
 
@@ -40,7 +48,7 @@ AC 3: exercise list loaded → all exercises for current user displayed, sorted 
 AC 4: user A creates exercise + user B views list → user B does not see user A's exercises → **Tested** — `"should enforce data isolation between users"` (exercise.test.ts:133)
 AC 5: no exercises exist + exercise list loaded → empty-state message with link to create → **Tested** — `"should show empty state message and create link when no exercises exist"` (exercises-page.test.ts:6)
 
-Coverage: 5 / 5 — min required: floor(0.9×5)=4 — **Pass**
+Coverage: 5 / 5 — min required: floor(0.9×5)=4 — Pass
 
 ### Task 4 — Workout Logging & History: Pass
 
@@ -53,7 +61,7 @@ AC 6: exercise page loaded with no previous workouts at all → only "Add set" f
 AC 7: weight or reps empty or non-numeric + submit → validation error → **Tested** — `"should reject empty weight"` (app.test.ts:127), `"should reject empty reps"` (app.test.ts:131), `"should reject non-numeric weight"` (app.test.ts:135), `"should reject non-numeric reps"` (app.test.ts:143)
 AC 8: weight or reps zero or negative + submit → validation error → **Tested** — `"should reject zero weight"` (app.test.ts:147), `"should reject zero reps"` (app.test.ts:151), `"should reject negative weight"` (app.test.ts:155), `"should reject negative reps"` (app.test.ts:159)
 
-Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — **Pass**
+Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — Pass
 
 ### Task 5 — User Preferences (Language & Theme): Pass
 
@@ -66,7 +74,7 @@ AC 6: theme set to system + OS preference is dark + page loaded → dark styles 
 AC 7: page loaded with saved dark theme preference → no FOUC → **Tested** — `"should execute in head before body renders (FOUC prevention)"` (app.test.ts:548); `"should have FOUC prevention inline script in app.html"` (app.test.ts:45)
 AC 8: unauthenticated user + navigates to /settings → redirect to /login → **Tested** — `"should redirect unauthenticated user from /settings to /login"` (app.test.ts:387)
 
-Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — **Pass**
+Coverage: 7 Tested + 1 Partially tested = 8 / 8 — min required: floor(0.9×8)=7 — Pass
 
 ### Task 6 — PWA Configuration: Pass
 
@@ -74,7 +82,7 @@ AC 1: GET /manifest.webmanifest returns valid JSON with name, short_name, icons,
 AC 2: service worker is registered on page load → navigator.serviceWorker.controller is not null → **Not covered** — no test verifies service worker registration; would require browser-based integration test
 AC 3: Lighthouse PWA audit or manual verification → app installable, opens in standalone mode → **Manual** — inherently requires manual verification per story specification
 
-Coverage: 1 Tested + 1 Manual = 2 / 3 — min required: floor(0.9×3)=2 — **Pass**
+Coverage: 1 Tested + 1 Manual = 2 / 3 — min required: floor(0.9×3)=2 — Pass
 
 ## Story Gaps
 
@@ -89,7 +97,7 @@ Coverage: 1 Tested + 1 Manual = 2 / 3 — min required: floor(0.9×3)=2 — **Pa
 
 ### Failing
 
-None.
+- **Typecheck** — 2 errors in `src/routes/exercises/[id]/+page.server.ts`: `locals.user` is possibly `null` on lines 33 and 66. The `load` function accesses `locals.user.id` without a null guard or non-null assertion. While the hooks.server.ts redirect ensures `locals.user` is always set at runtime for this protected route, TypeScript cannot infer this. Line 17 uses `locals.user!` (non-null assertion) but lines 33 and 66 do not.
 
 ### Non-blocking
 
@@ -100,6 +108,6 @@ None.
 
 ## Verdict
 
-**Pass**
+**Fail**
 
-**Reasoning:** All 6 tasks meet the ≥90% AC coverage threshold (all at 100% when counting Manual and Partially tested). Lint, tests (138/138), and typecheck all pass. Two ACs are partially tested (Task 2/AC 8 authenticated redirect, Task 4/AC 2 form refresh/clear), one is not covered (Task 6/AC 2 service worker registration), and three are appropriately manual. No failing issues found.
+**Reasoning:** All 6 tasks meet the ≥90% AC coverage threshold, and all 138 tests pass. However, `npm run check` (svelte-check) reports 2 type errors in `src/routes/exercises/[id]/+page.server.ts` where `locals.user` is possibly null on lines 33 and 66. The typecheck failure blocks the overall verdict.
