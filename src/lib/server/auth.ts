@@ -117,11 +117,6 @@ export function registerUser(
 		return { ok: false, error: passwordError, field: 'password' };
 	}
 
-	const existing = dbArg.select().from(user).where(eq(user.username, input.username)).get();
-	if (existing) {
-		return { ok: false, error: 'Username already taken', field: 'username' };
-	}
-
 	const passwordHash = bcrypt.hashSync(input.password, SALT_ROUNDS);
 	const createdAt = nowISO();
 

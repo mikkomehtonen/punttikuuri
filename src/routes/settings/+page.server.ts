@@ -6,21 +6,18 @@ import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user) {
-		throw redirect(303, '/login');
-	}
-
 	return {
-		currentLocale: locals.user.locale,
-		currentTheme: locals.user.theme,
+		currentLocale: locals.user!.locale,
+		currentTheme: locals.user!.theme,
 		saved: url.searchParams.get('saved') === '1'
 	};
 };
 
 export const actions: Actions = {
 	default: async ({ request, locals, cookies }) => {
-		if (!locals.user) {
-			throw redirect(303, '/login');
+		const userId = locals.user?.id;
+		if (!userId) {
+			throw redirect(302, '/login');
 		}
 
 		const formData = await request.formData();
@@ -35,7 +32,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid theme' });
 		}
 
-		db.update(user).set({ locale, theme }).where(eq(user.id, locals.user!.id)).run();
+		db.update(user).set({ locale, theme }).where(eq(user.id, userId)).run();
 
 		cookies.set('locale', locale, PUBLIC_COOKIE_OPTIONS);
 		cookies.set('theme', theme, PUBLIC_COOKIE_OPTIONS);

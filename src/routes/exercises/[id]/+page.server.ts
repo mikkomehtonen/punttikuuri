@@ -6,23 +6,19 @@ import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
 import { validateWeight, validateReps } from '$lib/server/workout-validation';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	if (!locals.user) {
-		throw redirect(303, '/login');
-	}
-
 	const exerciseId = parseInt(params.id, 10);
 	if (isNaN(exerciseId) || exerciseId <= 0) {
-		throw redirect(303, '/exercises');
+		throw redirect(302, '/exercises');
 	}
 
 	const exercise = db
 		.select()
 		.from(exerciseType)
-		.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user.id)))
+		.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user!.id)))
 		.get();
 
 	if (!exercise) {
-		throw redirect(303, '/exercises');
+		throw redirect(302, '/exercises');
 	}
 
 	const today = new Date().toISOString().slice(0, 10);

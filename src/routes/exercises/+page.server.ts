@@ -4,14 +4,10 @@ import { exerciseType } from '$lib/server/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		return { exercises: [] };
-	}
-
 	const exercises = db
 		.select()
 		.from(exerciseType)
-		.where(eq(exerciseType.user_id, locals.user.id))
+		.where(eq(exerciseType.user_id, locals.user!.id))
 		.orderBy(asc(sql`COALESCE(${exerciseType.display_order}, 99999)`), asc(exerciseType.name))
 		.all();
 

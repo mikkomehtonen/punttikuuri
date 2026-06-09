@@ -42,6 +42,7 @@
 			name="short_name"
 			type="text"
 			bind:value={shortName}
+			maxlength={30}
 			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
 		/>
 	</label>
