@@ -15,7 +15,8 @@ export function validateReps(repsStr: string): string | null {
 }
 
 export function validateExerciseName(name: string): string | null {
-	if (!name || name.length > 100) {
+	const trimmed = name.trim();
+	if (!trimmed || trimmed.length > 100) {
 		return 'Exercise name is required (max 100 characters)';
 	}
 	return null;

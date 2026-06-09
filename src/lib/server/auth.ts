@@ -244,22 +244,6 @@ export function deleteSession(
 	dbArg.delete(session).where(eq(session.id, sessionHash)).run();
 }
 
-export function updateUserLocale(
-	userId: number,
-	locale: ValidLocale,
-	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
-): void {
-	dbArg.update(user).set({ locale }).where(eq(user.id, userId)).run();
-}
-
-export function updateUserTheme(
-	userId: number,
-	theme: ValidTheme,
-	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
-): void {
-	dbArg.update(user).set({ theme }).where(eq(user.id, userId)).run();
-}
-
 const COOKIE_BASE = {
 	sameSite: 'lax' as const,
 	path: '/',

@@ -264,7 +264,7 @@ describe('Task 3 - Exercise name validation', () => {
 	});
 
 	it('should reject whitespace-only exercise name', () => {
-		expect(validateExerciseName('   '.trim())).not.toBeNull();
+		expect(validateExerciseName('   ')).not.toBeNull();
 	});
 });
 
