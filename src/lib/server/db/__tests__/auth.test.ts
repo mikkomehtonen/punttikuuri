@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../schema';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
 import {
 	registerUser,
 	loginUser,
@@ -65,6 +67,14 @@ describe('validatePassword', () => {
 		expect(validatePassword('1234567')).not.toBeNull();
 		expect(validatePassword('')).not.toBeNull();
 	});
+
+	it('should reject passwords longer than 72 bytes (bcrypt limit)', () => {
+		expect(validatePassword('a'.repeat(73))).not.toBeNull();
+	});
+
+	it('should accept passwords at exactly 72 bytes', () => {
+		expect(validatePassword('a'.repeat(72))).toBeNull();
+	});
 });
 
 describe('registerUser', () => {
@@ -82,6 +92,14 @@ describe('registerUser', () => {
 			expect(result.user.theme).toBe('system');
 			expect(result.sessionToken).toBeTruthy();
 			expect(typeof result.sessionToken).toBe('string');
+
+			const stored = db
+				.select()
+				.from(schema.user)
+				.where(eq(schema.user.username, 'valid_user'))
+				.get()!;
+			expect(stored.password_hash).toMatch(/^\$2[aby]\$/);
+			expect(bcrypt.compareSync('password123', stored.password_hash)).toBe(true);
 		}
 	});
 
@@ -105,11 +123,17 @@ describe('registerUser', () => {
 		const r1 = registerUser({ username: 'dupe_user', password: 'password123' }, db);
 		expect(r1.ok).toBe(true);
 
+		const usersBefore = db.select().from(schema.user).all().length;
+
 		const r2 = registerUser({ username: 'dupe_user', password: 'password456' }, db);
 		expect(r2.ok).toBe(false);
 		if (!r2.ok) {
 			expect(r2.field).toBe('username');
+			expect(r2.error).toBe('Username already taken');
 		}
+
+		const usersAfter = db.select().from(schema.user).all().length;
+		expect(usersAfter).toBe(usersBefore);
 	});
 });
 
@@ -132,11 +156,16 @@ describe('loginUser', () => {
 	it('should reject invalid password', () => {
 		registerUser({ username: 'login_user2', password: 'password123' }, db);
 
+		const sessionsBefore = db.select().from(schema.session).all().length;
+
 		const result = loginUser({ username: 'login_user2', password: 'wrongpassword' }, db);
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
 			expect(result.error).toBe('Invalid username or password');
 		}
+
+		const sessionsAfter = db.select().from(schema.session).all().length;
+		expect(sessionsAfter).toBe(sessionsBefore);
 	});
 
 	it('should reject non-existent username', () => {

@@ -1,17 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { getSessionUser, isValidLocale, isValidTheme } from '$lib/server/auth';
-
-const protectedRoutes = ['/exercises', '/settings'] as const;
-const authRoutes = ['/login', '/register'] as const;
-
-export function isProtectedRoute(pathname: string): boolean {
-	return protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
-}
-
-export function isAuthRoute(pathname: string): boolean {
-	return authRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
-}
+import { isProtectedRoute, isAuthRoute } from '$lib/server/route-guards';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get('session_id');

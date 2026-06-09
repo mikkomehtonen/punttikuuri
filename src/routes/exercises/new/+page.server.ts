@@ -2,7 +2,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType } from '$lib/server/db/schema';
-import { validateExerciseName } from '$lib/server/workout-validation';
+import { validateExerciseName, validateShortName } from '$lib/server/workout-validation';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -18,6 +18,11 @@ export const actions: Actions = {
 		const nameError = validateExerciseName(name);
 		if (nameError) {
 			return fail(400, { error: nameError });
+		}
+
+		const shortNameError = validateShortName(shortName);
+		if (shortNameError) {
+			return fail(400, { error: shortNameError });
 		}
 
 		let displayOrder: number | null = null;

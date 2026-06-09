@@ -1,10 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { registerUser, setAuthCookies } from '$lib/server/auth';
-
-export const load: PageServerLoad = async () => {
-	return {};
-};
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {

@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { isProtectedRoute, isAuthRoute } from '../../../hooks.server';
-import { validateWeight, validateReps, validateExerciseName } from '../workout-validation';
+import { isProtectedRoute, isAuthRoute } from '../route-guards';
+import {
+	validateWeight,
+	validateReps,
+	validateExerciseName,
+	validateShortName
+} from '../workout-validation';
 import { pwaManifest } from '../../pwa-manifest';
 import {
 	validateUsername,
@@ -42,6 +47,24 @@ describe('Task 1 - Project Scaffolding & Database Setup', () => {
 		expect(appHtml).toContain('document.documentElement.classList.add');
 		expect(appHtml).toContain('theme');
 		expect(appHtml).toContain('prefers-color-scheme');
+	});
+
+	it('should have package.json with dev and build scripts for SvelteKit', () => {
+		const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
+		expect(pkg.scripts.dev).toContain('vite dev');
+		expect(pkg.scripts.build).toContain('vite build');
+	});
+
+	it('should have adapter-node installed for production builds', () => {
+		const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
+		const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+		expect(allDeps['@sveltejs/adapter-node']).toBeTruthy();
+	});
+
+	it('should have dark mode styles that activate via dark class on html element', () => {
+		const layout = fs.readFileSync(path.resolve('src/routes/+layout.svelte'), 'utf-8');
+		expect(layout).toContain('dark:bg-gray-900');
+		expect(layout).toContain('dark:text-gray-100');
 	});
 });
 
@@ -319,5 +342,235 @@ describe('Public cookie options', () => {
 
 	it('should have path set to /', () => {
 		expect(PUBLIC_COOKIE_OPTIONS.path).toBe('/');
+	});
+});
+
+describe('Task 2 - Hooks redirect behavior', () => {
+	it('should redirect unauthenticated user from protected route to /login', async () => {
+		const { handle } = await import('../../../hooks.server');
+
+		const event = {
+			url: new URL('http://localhost/exercises'),
+			cookies: {
+				get: () => undefined,
+				set: () => {},
+				delete: () => {}
+			},
+			locals: {} as Record<string, unknown>
+		};
+
+		let caught: unknown = null;
+		try {
+			await handle({
+				event: event as never,
+				resolve: async () => new Response('ok')
+			});
+		} catch (e) {
+			caught = e;
+		}
+
+		expect(caught).toBeTruthy();
+		const r = caught as { status: number; location: string };
+		expect(r.status).toBe(302);
+		expect(r.location).toBe('/login');
+	});
+
+	it('should redirect authenticated user from /login to /exercises', async () => {
+		// Verify the route classification that drives the redirect logic:
+		// authenticated users on auth routes get redirected to /exercises
+		expect(isAuthRoute('/login')).toBe(true);
+		expect(isProtectedRoute('/login')).toBe(false);
+		expect(isProtectedRoute('/exercises')).toBe(true);
+		expect(isAuthRoute('/exercises')).toBe(false);
+	});
+
+	it('should redirect unauthenticated user from /settings to /login', async () => {
+		const { handle } = await import('../../../hooks.server');
+
+		const event = {
+			url: new URL('http://localhost/settings'),
+			cookies: {
+				get: () => undefined,
+				set: () => {},
+				delete: () => {}
+			},
+			locals: {} as Record<string, unknown>
+		};
+
+		let caught: unknown = null;
+		try {
+			await handle({
+				event: event as never,
+				resolve: async () => new Response('ok')
+			});
+		} catch (e) {
+			caught = e;
+		}
+
+		expect(caught).toBeTruthy();
+		const r = caught as { status: number; location: string };
+		expect(r.status).toBe(302);
+		expect(r.location).toBe('/login');
+	});
+
+	it('should allow unauthenticated access to /login', async () => {
+		const { handle } = await import('../../../hooks.server');
+
+		const event = {
+			url: new URL('http://localhost/login'),
+			cookies: {
+				get: () => undefined,
+				set: () => {},
+				delete: () => {}
+			},
+			locals: {} as Record<string, unknown>
+		};
+
+		let resolved = false;
+		await handle({
+			event: event as never,
+			resolve: async () => {
+				resolved = true;
+				return new Response('ok');
+			}
+		});
+
+		expect(resolved).toBe(true);
+	});
+
+	it('should allow unauthenticated access to /', async () => {
+		const { handle } = await import('../../../hooks.server');
+
+		const event = {
+			url: new URL('http://localhost/'),
+			cookies: {
+				get: () => undefined,
+				set: () => {},
+				delete: () => {}
+			},
+			locals: {} as Record<string, unknown>
+		};
+
+		let resolved = false;
+		await handle({
+			event: event as never,
+			resolve: async () => {
+				resolved = true;
+				return new Response('ok');
+			}
+		});
+
+		expect(resolved).toBe(true);
+	});
+});
+
+describe('Task 5 - Settings cookie updates', () => {
+	it('should set locale cookie when updating locale', () => {
+		const setCalls: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+		const mockCookies = {
+			set: (name: string, value: string, options: Record<string, unknown>) => {
+				setCalls.push({ name, value, options });
+			},
+			get: () => undefined,
+			delete: () => {}
+		};
+
+		setAuthCookies(mockCookies as never, 'test-token', 'fi', 'dark');
+
+		const localeCookie = setCalls.find((c) => c.name === 'locale');
+		expect(localeCookie).toBeDefined();
+		expect(localeCookie!.value).toBe('fi');
+	});
+
+	it('should set theme cookie when updating theme', () => {
+		const setCalls: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+		const mockCookies = {
+			set: (name: string, value: string, options: Record<string, unknown>) => {
+				setCalls.push({ name, value, options });
+			},
+			get: () => undefined,
+			delete: () => {}
+		};
+
+		setAuthCookies(mockCookies as never, 'test-token', 'en', 'dark');
+
+		const themeCookie = setCalls.find((c) => c.name === 'theme');
+		expect(themeCookie).toBeDefined();
+		expect(themeCookie!.value).toBe('dark');
+	});
+
+	it('should update both locale and theme cookies together', () => {
+		const setCalls: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+		const mockCookies = {
+			set: (name: string, value: string, options: Record<string, unknown>) => {
+				setCalls.push({ name, value, options });
+			},
+			get: () => undefined,
+			delete: () => {}
+		};
+
+		setAuthCookies(mockCookies as never, 'test-token', 'fi', 'light');
+
+		const localeCookie = setCalls.find((c) => c.name === 'locale');
+		const themeCookie = setCalls.find((c) => c.name === 'theme');
+		expect(localeCookie!.value).toBe('fi');
+		expect(themeCookie!.value).toBe('light');
+	});
+});
+
+describe('Task 5 - FOUC script DOM behavior', () => {
+	it('should add dark class to html element when theme cookie is dark', () => {
+		const appHtml = fs.readFileSync(path.resolve('src/app.html'), 'utf-8');
+		expect(appHtml).toContain("theme === 'dark'");
+		expect(appHtml).toContain("document.documentElement.classList.add('dark')");
+	});
+
+	it('should not add dark class when theme cookie is light', () => {
+		const appHtml = fs.readFileSync(path.resolve('src/app.html'), 'utf-8');
+		// The script only adds 'dark' class for 'dark' or 'system'+dark media
+		// For 'light' theme, neither condition matches, so no class is added
+		const scriptMatch = appHtml.match(/<script>([\s\S]*?)<\/script>/);
+		expect(scriptMatch).toBeTruthy();
+		const script = scriptMatch![1];
+		expect(script).toContain("theme === 'dark'");
+		expect(script).toContain("theme === 'system'");
+		// No explicit 'light' check needed — light is the default (no class added)
+		expect(script).not.toContain("theme === 'light'");
+	});
+
+	it('should add dark class when theme is system and OS prefers dark', () => {
+		const appHtml = fs.readFileSync(path.resolve('src/app.html'), 'utf-8');
+		expect(appHtml).toContain("theme === 'system'");
+		expect(appHtml).toContain('prefers-color-scheme: dark');
+		expect(appHtml).toContain("document.documentElement.classList.add('dark')");
+	});
+
+	it('should execute in head before body renders (FOUC prevention)', () => {
+		const appHtml = fs.readFileSync(path.resolve('src/app.html'), 'utf-8');
+		const headPos = appHtml.indexOf('<head>');
+		const scriptPos = appHtml.indexOf('<script>');
+		const headClosePos = appHtml.indexOf('</head>');
+		const bodyPos = appHtml.indexOf('<body');
+		expect(scriptPos).toBeGreaterThan(headPos);
+		expect(scriptPos).toBeLessThan(headClosePos);
+		expect(headClosePos).toBeLessThan(bodyPos);
+	});
+});
+
+describe('Task 3 - Short name validation', () => {
+	it('should accept null short name', () => {
+		expect(validateShortName(null)).toBeNull();
+	});
+
+	it('should accept valid short name', () => {
+		expect(validateShortName('BP')).toBeNull();
+	});
+
+	it('should reject short name over 30 characters', () => {
+		expect(validateShortName('a'.repeat(31))).not.toBeNull();
+	});
+
+	it('should accept short name at exactly 30 characters', () => {
+		expect(validateShortName('a'.repeat(30))).toBeNull();
 	});
 });

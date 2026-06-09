@@ -18,14 +18,6 @@ beforeAll(() => {
 	const testDb = createTestDb(TEST_DB_PATH);
 	sqlite = testDb.sqlite;
 	db = testDb.db;
-
-	const userA = registerUser({ username: 'exercise_user_a', password: 'password123' }, db);
-	if (!userA.ok) throw new Error('Failed to create user A');
-	userIdA = userA.user.id;
-
-	const userB = registerUser({ username: 'exercise_user_b', password: 'password123' }, db);
-	if (!userB.ok) throw new Error('Failed to create user B');
-	userIdB = userB.user.id;
 });
 
 afterAll(() => {
@@ -80,8 +72,9 @@ describe('Exercise Type Management', () => {
 		expect(result.display_order).toBeNull();
 	});
 
-	it('should reject empty name (database constraint: NOT NULL)', () => {
-		// SQLite allows empty strings even with NOT NULL
+	it('should allow empty string with NOT NULL constraint (SQLite behavior)', () => {
+		// SQLite NOT NULL only rejects NULL, not empty strings.
+		// Application-level validation (validateExerciseName) blocks empty names.
 		const result = db
 			.insert(exerciseType)
 			.values({

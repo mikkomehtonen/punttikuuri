@@ -20,3 +20,10 @@ export function validateExerciseName(name: string): string | null {
 	}
 	return null;
 }
+
+export function validateShortName(shortName: string | null): string | null {
+	if (shortName !== null && shortName.length > 30) {
+		return 'Short name must be at most 30 characters';
+	}
+	return null;
+}
