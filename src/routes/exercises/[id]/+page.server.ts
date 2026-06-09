@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			and(
 				eq(workoutSession.exercise_type_id, exercise.id),
 				eq(workoutSession.workout_date, today),
-				eq(workoutSession.user_id, locals.user.id)
+				eq(workoutSession.user_id, locals.user!.id)
 			)
 		)
 		.get();
@@ -63,7 +63,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.where(
 			and(
 				eq(workoutSession.exercise_type_id, exercise.id),
-				eq(workoutSession.user_id, locals.user.id),
+				eq(workoutSession.user_id, locals.user!.id),
 				sql`${workoutSession.workout_date} != ${today}`
 			)
 		)
