@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - /tmp/punttikuuri-test:/app/data
+    restart: unless-stopped

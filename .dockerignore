@@ -1,0 +1,12 @@
+node_modules
+.svelte-kit
+build
+data
+.git
+.vscode
+.opencode
+stories
+docs
+review-report.md
+.env*
+*.db*

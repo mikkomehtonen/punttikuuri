@@ -40,6 +40,22 @@ npm run db:studio     # open Drizzle Studio
 ```sh
 npm run test          # run all unit tests
 npm run test:unit     # run in watch mode
+npm run test:docker   # run Docker deployment tests
 npm run check         # typecheck
 npm run lint          # prettier + eslint
+```
+
+## Production (Docker)
+
+Build and run the production container:
+
+```sh
+docker compose up -d
+```
+
+The app is available at http://localhost:3000. The SQLite database persists in `/data/punttikuuri` on the host across container restarts.
+
+```sh
+docker compose down       # stop the container (data preserved)
+docker compose logs -f    # view logs
 ```

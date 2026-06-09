@@ -21,3 +21,11 @@
 **Area**: architecture
 **What happened**: `export const db = getDb()` created a SQLite connection at import time, causing side effects in test environments. Replaced with a `Proxy` that defers `getDb()` until first property access.
 **Takeaway**: Use `new Proxy({} as T, { get: (_, prop, r) => Reflect.get(getInstance(), prop, r) })` to lazily initialize module-level exports without changing any import sites.
+
+---
+
+## Docker deployment stories require automated test scripts
+**Date**: 2026-06-09
+**Area**: testing
+**What happened**: Acceptance reviewer failed a Docker deployment story despite manual verification of all ACs, because there were no automated test scripts. Infrastructure/deployment work still needs testable verification.
+**Takeaway**: For Docker/infrastructure stories, create a shell script (e.g., `test-docker.sh`) that automates build verification, container startup, health checks, persistence tests, and image content validation. Add it to package.json as `test:docker`.
