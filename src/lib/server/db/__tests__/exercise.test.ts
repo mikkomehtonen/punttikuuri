@@ -6,6 +6,7 @@ import { eq, asc, sql, and } from 'drizzle-orm';
 import { registerUser } from '../../auth';
 import { exerciseType, workoutSession, setEntry } from '../schema';
 import { createTestDb, destroyTestDb, cleanAllTables } from './test-utils';
+import { logSet } from '../../workout-service';
 
 const TEST_DB_PATH = 'data/test-exercise.db';
 let db: BetterSQLite3Database<typeof schema>;
@@ -387,6 +388,37 @@ describe('Workout Logging', () => {
 
 		const sets = db.select().from(setEntry).where(eq(setEntry.workout_session_id, ws.id)).all();
 		expect(sets).toHaveLength(0);
+	});
+
+	it('logSet should auto-create session and insert set with sequential numbering', () => {
+		const today = new Date().toISOString().slice(0, 10);
+
+		logSet(db, userIdA, exerciseId, 100, 5);
+		logSet(db, userIdA, exerciseId, 102.5, 3);
+
+		const sessions = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(eq(workoutSession.user_id, userIdA), eq(workoutSession.exercise_type_id, exerciseId))
+			)
+			.all();
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0].workout_date).toBe(today);
+
+		const sets = db
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, sessions[0].id))
+			.orderBy(asc(setEntry.set_number))
+			.all();
+		expect(sets).toHaveLength(2);
+		expect(sets[0].set_number).toBe(1);
+		expect(sets[0].weight_kg).toBe(100);
+		expect(sets[0].repetitions).toBe(5);
+		expect(sets[1].set_number).toBe(2);
+		expect(sets[1].weight_kg).toBe(102.5);
+		expect(sets[1].repetitions).toBe(3);
 	});
 });
 

@@ -7,10 +7,12 @@
 **Typecheck:** **Fail** — 2 errors, 2 warnings
 
 Type errors:
+
 - `src/routes/exercises/[id]/+page.server.ts:33:32` — `'locals.user' is possibly 'null'`
 - `src/routes/exercises/[id]/+page.server.ts:66:32` — `'locals.user' is possibly 'null'`
 
 Warnings (non-breaking):
+
 - `src/routes/settings/+page.svelte:11:30` — state_referenced_locally for `data.currentLocale`
 - `src/routes/settings/+page.svelte:12:29` — state_referenced_locally for `data.currentTheme`
 

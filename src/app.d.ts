@@ -7,15 +7,15 @@ declare global {
 			user: {
 				id: number;
 				username: string;
-				locale: string;
-				theme: string;
+				locale: 'en' | 'fi';
+				theme: 'light' | 'dark' | 'system';
 			} | null;
 			locale: 'en' | 'fi';
-			theme: string;
+			theme: 'light' | 'dark' | 'system';
 		}
 		interface PageData {
 			locale: 'en' | 'fi';
-			theme: string;
+			theme: 'light' | 'dark' | 'system';
 		}
 		// interface PageState {}
 		// interface Platform {}

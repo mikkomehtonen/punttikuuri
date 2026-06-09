@@ -23,8 +23,11 @@ export function validateExerciseName(name: string): string | null {
 }
 
 export function validateShortName(shortName: string | null): string | null {
-	if (shortName !== null && shortName.length > 30) {
-		return 'Short name must be at most 30 characters';
+	if (shortName !== null) {
+		const trimmed = shortName.trim();
+		if (trimmed.length > 30) {
+			return 'Short name must be at most 30 characters';
+		}
 	}
 	return null;
 }

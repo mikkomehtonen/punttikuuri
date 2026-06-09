@@ -9,6 +9,14 @@ import type { Cookies } from '@sveltejs/kit';
 
 const SALT_ROUNDS = 12;
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+let _dummyHash: string | null = null;
+function getDummyHash(): string {
+	if (!_dummyHash) {
+		_dummyHash = bcrypt.hashSync('dummy', SALT_ROUNDS);
+	}
+	return _dummyHash;
+}
 export const VALID_LOCALES = ['en', 'fi'] as const;
 export const VALID_THEMES = ['light', 'dark', 'system'] as const;
 export type ValidLocale = (typeof VALID_LOCALES)[number];
@@ -60,8 +68,8 @@ function createSessionForUser(userId: number, dbArg: BetterSQLite3Database<typeo
 export interface AuthUser {
 	id: number;
 	username: string;
-	locale: string;
-	theme: string;
+	locale: ValidLocale;
+	theme: ValidTheme;
 }
 
 export interface RegisterInput {
@@ -152,8 +160,8 @@ export function registerUser(
 		user: {
 			id: newUser.id,
 			username: newUser.username,
-			locale: newUser.locale,
-			theme: newUser.theme
+			locale: newUser.locale as ValidLocale,
+			theme: newUser.theme as ValidTheme
 		},
 		sessionToken
 	};
@@ -182,11 +190,11 @@ export function loginUser(
 	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
 ): LoginOutcome {
 	const existing = dbArg.select().from(user).where(eq(user.username, input.username)).get();
-	if (!existing) {
-		return { ok: false, error: 'Invalid username or password' };
-	}
 
-	if (!bcrypt.compareSync(input.password, existing.password_hash)) {
+	const hashToCheck = existing?.password_hash ?? getDummyHash();
+	const passwordValid = bcrypt.compareSync(input.password, hashToCheck);
+
+	if (!existing || !passwordValid) {
 		return { ok: false, error: 'Invalid username or password' };
 	}
 
@@ -197,8 +205,8 @@ export function loginUser(
 		user: {
 			id: existing.id,
 			username: existing.username,
-			locale: existing.locale,
-			theme: existing.theme
+			locale: existing.locale as ValidLocale,
+			theme: existing.theme as ValidTheme
 		},
 		sessionToken
 	};
@@ -233,7 +241,11 @@ export function getSessionUser(
 		return null;
 	}
 
-	return row.user;
+	return {
+		...row.user,
+		locale: row.user.locale as ValidLocale,
+		theme: row.user.theme as ValidTheme
+	};
 }
 
 export function deleteSession(
@@ -263,8 +275,8 @@ export const PUBLIC_COOKIE_OPTIONS = {
 export function setAuthCookies(
 	cookies: Cookies,
 	sessionToken: string,
-	locale: string,
-	theme: string
+	locale: ValidLocale,
+	theme: ValidTheme
 ): void {
 	cookies.set('session_id', sessionToken, COOKIE_OPTIONS);
 	cookies.set('locale', locale, PUBLIC_COOKIE_OPTIONS);

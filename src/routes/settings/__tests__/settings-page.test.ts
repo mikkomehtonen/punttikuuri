@@ -4,12 +4,12 @@ import SettingsPage from '../+page.svelte';
 
 function makeData(overrides: Record<string, unknown> = {}) {
 	return {
-		currentLocale: 'en',
-		currentTheme: 'system',
+		currentLocale: 'en' as const,
+		currentTheme: 'system' as const,
 		saved: false,
 		locale: 'en' as const,
-		theme: 'system',
-		user: { id: 1, username: 'test', locale: 'en', theme: 'system' },
+		theme: 'system' as const,
+		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
 		...overrides
 	};
 }

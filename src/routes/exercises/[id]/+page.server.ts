@@ -4,6 +4,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
 import { validateWeight, validateReps } from '$lib/server/workout-validation';
+import { logSet } from '$lib/server/workout-service';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const exerciseId = parseInt(params.id, 10);
@@ -146,87 +147,7 @@ export const actions: Actions = {
 		const weightKg = Number(weightKgStr);
 		const repetitions = Number(repetitionsStr);
 
-		const userId = locals.user.id;
-		const now = new Date();
-		const today = now.toISOString().slice(0, 10);
-		const nowISO = now.toISOString();
-
-		// Use a transaction to atomically find-or-create session and insert set
-		db.transaction((tx) => {
-			// Find existing workout session for today
-			let ws = tx
-				.select()
-				.from(workoutSession)
-				.where(
-					and(
-						eq(workoutSession.exercise_type_id, exerciseId),
-						eq(workoutSession.workout_date, today),
-						eq(workoutSession.user_id, userId)
-					)
-				)
-				.get();
-
-			// Create if not found (with retry in case of concurrent insert)
-			if (!ws) {
-				try {
-					ws = tx
-						.insert(workoutSession)
-						.values({
-							user_id: userId,
-							exercise_type_id: exerciseId,
-							workout_date: today,
-							created_at: nowISO
-						})
-						.returning()
-						.get();
-				} catch (err) {
-					if (
-						!err ||
-						typeof err !== 'object' ||
-						!('code' in err) ||
-						(err as { code: string }).code !== 'SQLITE_CONSTRAINT_UNIQUE'
-					) {
-						throw err;
-					}
-					// UNIQUE constraint violation — another request created it first;
-					// re-fetch the session created by the concurrent request
-					const existing = tx
-						.select()
-						.from(workoutSession)
-						.where(
-							and(
-								eq(workoutSession.exercise_type_id, exerciseId),
-								eq(workoutSession.workout_date, today),
-								eq(workoutSession.user_id, userId)
-							)
-						)
-						.get();
-					if (!existing) {
-						throw new Error('Failed to create or find workout session', { cause: err });
-					}
-					ws = existing;
-				}
-			}
-
-			// Get next set number atomically within the transaction
-			const maxSet = tx
-				.select({ max: sql<number>`COALESCE(MAX(${setEntry.set_number}), 0)` })
-				.from(setEntry)
-				.where(eq(setEntry.workout_session_id, ws.id))
-				.get();
-
-			const nextSetNumber = (maxSet?.max ?? 0) + 1;
-
-			tx.insert(setEntry)
-				.values({
-					workout_session_id: ws.id,
-					set_number: nextSetNumber,
-					weight_kg: weightKg,
-					repetitions,
-					created_at: nowISO
-				})
-				.run();
-		});
+		logSet(db, locals.user.id, exerciseId, weightKg, repetitions);
 
 		throw redirect(303, `/exercises/${exerciseId}`);
 	}

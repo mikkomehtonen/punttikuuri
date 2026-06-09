@@ -8,9 +8,9 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [],
-					locale: 'en',
-					theme: 'system',
-					user: { id: 1, username: 'test', locale: 'en', theme: 'system' }
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
 				}
 			}
 		});
@@ -28,9 +28,9 @@ describe('Exercises Page', () => {
 						{ id: 1, name: 'Bench Press', short_name: 'BP' },
 						{ id: 2, name: 'Squat', short_name: null }
 					],
-					locale: 'en',
-					theme: 'system',
-					user: { id: 1, username: 'test', locale: 'en', theme: 'system' }
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
 				}
 			}
 		});
@@ -47,9 +47,9 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [],
-					locale: 'fi',
-					theme: 'system',
-					user: { id: 1, username: 'test', locale: 'fi', theme: 'system' }
+					locale: 'fi' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const }
 				}
 			}
 		});
@@ -62,9 +62,9 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [{ id: 1, name: 'Test', short_name: null }],
-					locale: 'en',
-					theme: 'system',
-					user: { id: 1, username: 'test', locale: 'en', theme: 'system' }
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
 				}
 			}
 		});

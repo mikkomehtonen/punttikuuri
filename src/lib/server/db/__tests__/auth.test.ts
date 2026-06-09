@@ -175,6 +175,23 @@ describe('loginUser', () => {
 			expect(result.error).toBe('Invalid username or password');
 		}
 	});
+
+	it('should run bcrypt for non-existent users to prevent timing side-channel', () => {
+		registerUser({ username: 'timing_user', password: 'password123' }, db);
+
+		const startExisting = performance.now();
+		loginUser({ username: 'timing_user', password: 'wrongpassword' }, db);
+		const durationExisting = performance.now() - startExisting;
+
+		const startNonExisting = performance.now();
+		loginUser({ username: 'nonexistent_user', password: 'wrongpassword' }, db);
+		const durationNonExisting = performance.now() - startNonExisting;
+
+		// Both paths should take a similar amount of time (bcrypt is ~50-200ms).
+		// The non-existing path should not be significantly faster.
+		const ratio = durationNonExisting / durationExisting;
+		expect(ratio).toBeGreaterThan(0.3);
+	});
 });
 
 describe('getSessionUser', () => {

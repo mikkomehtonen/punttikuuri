@@ -11,8 +11,8 @@ function makeData(overrides: Record<string, unknown> = {}) {
 			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
 		}>,
 		locale: 'en' as const,
-		theme: 'system',
-		user: { id: 1, username: 'test', locale: 'en', theme: 'system' },
+		theme: 'system' as const,
+		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
 		...overrides
 	};
 }

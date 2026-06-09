@@ -21,4 +21,11 @@ export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
 	return _db;
 }
 
-export const db = getDb();
+export const db: ReturnType<typeof drizzle<typeof schema>> = new Proxy(
+	{} as ReturnType<typeof drizzle<typeof schema>>,
+	{
+		get(_, prop, receiver) {
+			return Reflect.get(getDb(), prop, receiver);
+		}
+	}
+);
