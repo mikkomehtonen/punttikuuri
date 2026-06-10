@@ -33,3 +33,12 @@ This avoids requiring the user to re-enter the same values repeatedly during tra
 **Area**: workflow
 **What happened**: The acceptance reviewer checks that every single acceptance criterion has a corresponding automated test assertion. Writing tests only for component behavior and updating obviously broken tests is not enough — every AC needs explicit coverage including CSS class assertions.
 **Takeaway**: Write tests for every AC alongside the implementation. For UI redesign stories, this means asserting CSS classes (e.g., `bg-primary-600`, `border-red-400`) in addition to text content. Plan test files for every page, not just components.
+
+---
+
+## Reviewer contradiction on infrastructure checks in unit tests
+
+**Date**: 2026-06-10
+**Area**: workflow
+**What happened**: Story 005 required `npm audit` to report 0 vulnerabilities as an AC. The acceptance reviewer required an automated test running `npm audit` in the test suite. The code reviewer rejected the same test as non-deterministic (network-dependent, can fail without code changes) and a layer violation (CI concern in unit tests). Neither reviewer could be satisfied without failing the other.
+**Takeaway**: When a story's ACs require infrastructure checks (npm audit, build success, etc.), write deterministic proxies in unit tests (e.g., lockfile version assertions) and document the infrastructure check as a CI step. If the acceptance reviewer insists on the live check, escalate early — this is a story design issue, not a code issue.
