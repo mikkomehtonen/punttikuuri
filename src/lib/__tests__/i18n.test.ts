@@ -42,4 +42,12 @@ describe('i18n', () => {
 		expect(t('workout.submit', 'en')).toBe('Log Set');
 		expect(t('workout.submit', 'fi')).toBe('Tallenna sarja');
 	});
+
+	it('should have app.tagline in English', () => {
+		expect(t('app.tagline', 'en')).toBe('Log your gym workouts');
+	});
+
+	it('should have app.tagline in Finnish', () => {
+		expect(t('app.tagline', 'fi')).toBe('Kirjaa salitreenisi');
+	});
 });

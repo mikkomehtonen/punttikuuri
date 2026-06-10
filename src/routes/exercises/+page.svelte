@@ -2,6 +2,9 @@
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
+	import Button from '$lib/components/Button.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import Badge from '$lib/components/Badge.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -13,41 +16,32 @@
 	<title>{t('exercises.title', locale)} - {t('app.name', locale)}</title>
 </svelte:head>
 
-<div class="mb-6 flex items-center justify-between">
+<div class="mb-8 flex items-center justify-between">
 	<h1 class="text-2xl font-bold">{t('exercises.title', locale)}</h1>
-	<a
-		href="/exercises/new"
-		class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-600 px-4 py-3 font-medium text-white"
-	>
+	<Button variant="primary" href="/exercises/new">
 		{t('exercises.create', locale)}
-	</a>
+	</Button>
 </div>
 
 {#if exercises.length === 0}
-	<div class="rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-		<p class="mb-4 text-gray-500 dark:text-gray-400">{t('exercises.empty', locale)}</p>
-		<a
-			href="/exercises/new"
-			class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-600 px-4 py-3 font-medium text-white"
-		>
-			{t('exercises.create', locale)}
-		</a>
-	</div>
+	<Card>
+		<div class="py-8 text-center">
+			<p class="mb-4 text-stone-500 dark:text-stone-400">{t('exercises.empty', locale)}</p>
+			<Button variant="primary" href="/exercises/new">
+				{t('exercises.create', locale)}
+			</Button>
+		</div>
+	</Card>
 {:else}
 	<ul class="flex flex-col gap-2">
 		{#each exercises as exercise (exercise.id)}
 			<li>
-				<a
-					href="/exercises/{exercise.id}"
-					class="block min-h-[44px] rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-				>
+				<Card href="/exercises/{exercise.id}">
 					<span class="font-medium">{exercise.name}</span>
 					{#if exercise.short_name}
-						<span class="ml-2 text-sm text-gray-500 dark:text-gray-400"
-							>({exercise.short_name})</span
-						>
+						<span class="ml-2"><Badge>{exercise.short_name}</Badge></span>
 					{/if}
-				</a>
+				</Card>
 			</li>
 		{/each}
 	</ul>
