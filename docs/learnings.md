@@ -17,3 +17,19 @@ For workout logging, form inputs for weight and repetitions are pre-filled from 
 3. Otherwise, return null (no prefill).
 
 This avoids requiring the user to re-enter the same values repeatedly during training sessions.
+
+## Svelte 5 snippet props in server-side component tests
+
+**Date**: 2026-06-10
+**Area**: testing
+**What happened**: When testing Svelte 5 components that accept `children: Snippet` props via `render()` from `svelte/server`, you can't pass a plain string. The `createRawSnippet` function from `svelte` is needed to create a snippet that renders text content.
+**Takeaway**: Use `createRawSnippet(() => ({ render: () => 'text content' }))` to pass children snippets in server-side component tests. Import it from `svelte`.
+
+---
+
+## Acceptance reviewer requires test for every AC
+
+**Date**: 2026-06-10
+**Area**: workflow
+**What happened**: The acceptance reviewer checks that every single acceptance criterion has a corresponding automated test assertion. Writing tests only for component behavior and updating obviously broken tests is not enough — every AC needs explicit coverage including CSS class assertions.
+**Takeaway**: Write tests for every AC alongside the implementation. For UI redesign stories, this means asserting CSS classes (e.g., `bg-primary-600`, `border-red-400`) in addition to text content. Plan test files for every page, not just components.
