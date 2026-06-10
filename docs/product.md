@@ -12,6 +12,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **PWA** — Installable on mobile devices for a native-app-like experience ([story](stories/001-gym-workout-logger/story.md))
 - **Set Prefill** — Weight and reps inputs auto-fill from the most recent set of the same exercise ([story](stories/003-prefill-set-values/story.md))
 - **Modern UI** — Warm amber/orange color palette, Inter typeface, reusable Button/Input/Card/Alert/Badge components, custom dumbbell favicon, cohesive dark/light theme with stone surface tones ([story](stories/004-redesign-ui-style/story.md))
+- **Secure Dependencies** — All npm audit vulnerabilities resolved via overrides for `cookie` (0.7.2) and `esbuild` (0.25.12), plus SvelteKit upgrade to 2.64.0 ([story](stories/005-fix-npm-vulnerabilities/story.md))
 
 ## Non-Goals
 
