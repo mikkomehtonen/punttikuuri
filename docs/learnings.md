@@ -1,31 +1,19 @@
 # Learnings
 
-## Type narrowing in shared interfaces cascades to test factories
-**Date**: 2026-06-09
-**Area**: testing
-**What happened**: Narrowing `AuthUser.locale` from `string` to `ValidLocale` caused 15 typecheck errors across 3 test files because `makeData()` helpers used plain string literals without `as const`.
-**Takeaway**: When narrowing types in shared interfaces (`app.d.ts`, `AuthUser`, etc.), immediately grep for all test data factories and add `as const` assertions in the same commit.
+## Testing Svelte 5 components with svelte/server render()
 
----
+Components can be rendered in Node.js using `render()` from `svelte/server`. This produces an HTML string which can be asserted against. The `render()` function accepts props via a `props` object, which includes both `data` and `form` for SvelteKit pages.
 
-## Story deployment context overrides generic security suggestions
-**Date**: 2026-06-09
-**Area**: architecture
-**What happened**: Code reviewer flagged missing `secure: true` on session cookies (score 3), but the story explicitly states "No Secure flag (Tailscale network)" since the app runs over HTTP on a Tailscale network.
-**Takeaway**: When a reviewer suggests a security hardening that conflicts with the story's stated deployment context, the story takes precedence. Note the conflict in the fix explanation rather than silently applying the change.
+### Form state initialization pattern
 
----
+When initializing `$state` variables from `data` props in Svelte 5 (runes mode), accessing `data` inside `$state(...)` only captures the initial value. This is intentional for form defaults — the form state should initialize from server data but be independently editable afterward. Svelte emits a `state_referenced_locally` warning for this pattern, which is expected and matches the pattern used elsewhere in the codebase (e.g., settings page).
 
-## Proxy pattern for lazy module initialization
-**Date**: 2026-06-09
-**Area**: architecture
-**What happened**: `export const db = getDb()` created a SQLite connection at import time, causing side effects in test environments. Replaced with a `Proxy` that defers `getDb()` until first property access.
-**Takeaway**: Use `new Proxy({} as T, { get: (_, prop, r) => Reflect.get(getInstance(), prop, r) })` to lazily initialize module-level exports without changing any import sites.
+### Prefill from last logged set
 
----
+For workout logging, form inputs for weight and repetitions are pre-filled from the most recently logged set of the same exercise. The derivation logic:
 
-## Docker deployment stories require automated test scripts
-**Date**: 2026-06-09
-**Area**: testing
-**What happened**: Acceptance reviewer failed a Docker deployment story despite manual verification of all ACs, because there were no automated test scripts. Infrastructure/deployment work still needs testable verification.
-**Takeaway**: For Docker/infrastructure stories, create a shell script (e.g., `test-docker.sh`) that automates build verification, container startup, health checks, persistence tests, and image content validation. Add it to package.json as `test:docker`.
+1. If there are sets logged today, use the last set (highest set_number).
+2. Otherwise, use the last set from the most recent previous session (if it has sets).
+3. Otherwise, return null (no prefill).
+
+This avoids requiring the user to re-enter the same values repeatedly during training sessions.

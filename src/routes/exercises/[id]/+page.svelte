@@ -10,8 +10,8 @@
 	const todaySets = $derived(data.todaySets ?? []);
 	const previousSessions = $derived(data.previousSessions ?? []);
 
-	let weight = $state('');
-	let reps = $state('');
+	let weight = $state(data.lastSet ? String(data.lastSet.weight_kg) : '');
+	let reps = $state(data.lastSet ? String(data.lastSet.repetitions) : '');
 </script>
 
 <svelte:head>

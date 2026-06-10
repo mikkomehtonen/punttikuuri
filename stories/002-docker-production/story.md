@@ -19,12 +19,12 @@ The application is self-hosted on a home server accessed via Tailscale. Currentl
 
 Four new files:
 
-| File | Purpose |
-|---|---|
-| `Dockerfile` | Multi-stage build producing a minimal production image |
-| `.dockerignore` | Exclude source, dev artifacts, and local data from build context |
-| `docker-compose.yml` | Single-service compose with persistent volume for the database |
-| `migrate.js` | Standalone migration runner using `drizzle-orm/better-sqlite3/migrator` |
+| File                 | Purpose                                                                 |
+| -------------------- | ----------------------------------------------------------------------- |
+| `Dockerfile`         | Multi-stage build producing a minimal production image                  |
+| `.dockerignore`      | Exclude source, dev artifacts, and local data from build context        |
+| `docker-compose.yml` | Single-service compose with persistent volume for the database          |
+| `migrate.js`         | Standalone migration runner using `drizzle-orm/better-sqlite3/migrator` |
 
 ### Dockerfile — multi-stage build
 

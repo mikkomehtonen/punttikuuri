@@ -10,6 +10,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 			workout_date: string;
 			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
 		}>,
+		lastSet: null as { weight_kg: number; repetitions: number } | null,
 		locale: 'en' as const,
 		theme: 'system' as const,
 		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -146,5 +147,59 @@ describe('Exercise Detail Page', () => {
 
 		expect(body).toContain('href="/exercises"');
 		expect(body).toContain('Back to exercises');
+	});
+
+	describe('prefill from lastSet', () => {
+		it('should prefill weight and reps from lastSet when present', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						lastSet: { weight_kg: 100, repetitions: 5 }
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('value="100"');
+			expect(body).toContain('value="5"');
+		});
+
+		it('should prefill weight with decimal value from lastSet', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						lastSet: { weight_kg: 72.5, repetitions: 8 }
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('value="72.5"');
+			expect(body).toContain('value="8"');
+		});
+
+		it('should keep weight and reps empty when lastSet is null', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({ lastSet: null }),
+					form: null
+				}
+			});
+
+			expect(body).not.toContain('value="100"');
+			expect(body).not.toContain('value="5"');
+		});
+
+		it('should keep weight and reps empty when lastSet is undefined', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData(),
+					form: null
+				}
+			});
+
+			expect(body).not.toContain('value="100"');
+			expect(body).not.toContain('value="5"');
+		});
 	});
 });

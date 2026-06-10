@@ -10,6 +10,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Workout History** — View previous workouts for an exercise inline, grouped by date, newest first ([story](stories/001-gym-workout-logger/story.md))
 - **User Preferences** — Language (English/Finnish) and theme (light/dark/system) selection persisted per user ([story](stories/001-gym-workout-logger/story.md))
 - **PWA** — Installable on mobile devices for a native-app-like experience ([story](stories/001-gym-workout-logger/story.md))
+- **Set Prefill** — Weight and reps inputs auto-fill from the most recent set of the same exercise ([story](stories/003-prefill-set-values/story.md))
 
 ## Non-Goals
 

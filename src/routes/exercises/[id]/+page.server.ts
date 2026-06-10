@@ -5,6 +5,7 @@ import { db } from '$lib/server/db';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
 import { validateWeight, validateReps } from '$lib/server/workout-validation';
 import { logSet } from '$lib/server/workout-service';
+import { deriveLastSet } from './utils';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const exerciseId = parseInt(params.id, 10);
@@ -97,6 +98,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const previousSessions = Array.from(sessionMap.values());
 
+	const lastSet = deriveLastSet(todaySets, previousSessions);
+
 	return {
 		exercise: {
 			id: exercise.id,
@@ -104,7 +107,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			short_name: exercise.short_name
 		},
 		todaySets,
-		previousSessions
+		previousSessions,
+		lastSet
 	};
 };
 
