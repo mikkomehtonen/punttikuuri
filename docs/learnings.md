@@ -42,3 +42,21 @@ This avoids requiring the user to re-enter the same values repeatedly during tra
 **Area**: workflow
 **What happened**: Story 005 required `npm audit` to report 0 vulnerabilities as an AC. The acceptance reviewer required an automated test running `npm audit` in the test suite. The code reviewer rejected the same test as non-deterministic (network-dependent, can fail without code changes) and a layer violation (CI concern in unit tests). Neither reviewer could be satisfied without failing the other.
 **Takeaway**: When a story's ACs require infrastructure checks (npm audit, build success, etc.), write deterministic proxies in unit tests (e.g., lockfile version assertions) and document the infrastructure check as a CI step. If the acceptance reviewer insists on the live check, escalate early — this is a story design issue, not a code issue.
+
+---
+
+## SvelteKit cookie `secure` defaults to true in production
+
+**Date**: 2026-06-10
+**Area**: architecture
+**What happened**: Login redirect loop when accessing the app over HTTP (Tailscale IP). Root cause: SvelteKit defaults `secure: true` for cookies in production mode except on `http://localhost`. The `Secure` attribute prevents browsers from sending cookies over HTTP, causing the session cookie to be lost after login.
+**Takeaway**: For self-hosted apps accessed over HTTP (not localhost), explicitly set `secure: false` in cookie options. The `csrf: { checkOrigin: false }` config is a separate concern (allows form POSTs from non-localhost origins). If HTTPS is added later, change to `secure: true` or make it dynamic based on `ORIGIN` env var.
+
+---
+
+## SvelteKit `csrf.checkOrigin` is deprecated
+
+**Date**: 2026-06-10
+**Area**: build
+**What happened**: Test output shows deprecation warning: `config.kit.csrf.checkOrigin` has been deprecated in favour of `csrf.trustedOrigins`.
+**Takeaway**: When updating SvelteKit config, use `csrf: { trustedOrigins: [...] }` instead of `csrf: { checkOrigin: false }`. The current config works but will need updating in a future SvelteKit version.

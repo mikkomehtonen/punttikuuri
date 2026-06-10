@@ -208,6 +208,7 @@ describe('Task 2 - Authentication cookie configuration', () => {
 		expect(sessionCookie!.options.httpOnly).toBe(true);
 		expect(sessionCookie!.options.sameSite).toBe('lax');
 		expect(sessionCookie!.options.path).toBe('/');
+		expect(sessionCookie!.options.secure).toBe(false);
 	});
 
 	it('should set locale and theme cookies as non-HttpOnly', () => {
@@ -226,11 +227,13 @@ describe('Task 2 - Authentication cookie configuration', () => {
 		expect(localeCookie).toBeDefined();
 		expect(localeCookie!.value).toBe('fi');
 		expect(localeCookie!.options.httpOnly).toBe(false);
+		expect(localeCookie!.options.secure).toBe(false);
 
 		const themeCookie = setCalls.find((c) => c.name === 'theme');
 		expect(themeCookie).toBeDefined();
 		expect(themeCookie!.value).toBe('dark');
 		expect(themeCookie!.options.httpOnly).toBe(false);
+		expect(themeCookie!.options.secure).toBe(false);
 	});
 
 	it('should clear all cookies on logout', () => {
@@ -343,6 +346,10 @@ describe('Public cookie options', () => {
 
 	it('should have path set to /', () => {
 		expect(PUBLIC_COOKIE_OPTIONS.path).toBe('/');
+	});
+
+	it('should have secure set to false', () => {
+		expect(PUBLIC_COOKIE_OPTIONS.secure).toBe(false);
 	});
 });
 
