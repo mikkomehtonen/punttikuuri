@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@sveltejs/adapter-node": "5.5.4",
-		"@sveltejs/kit": "2.63.1",
+		"@sveltejs/kit": "2.64.0",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/vite": "4.3.0",
 		"@testing-library/jest-dom": "6.9.1",
@@ -52,5 +52,9 @@
 		"bcryptjs": "3.0.3",
 		"better-sqlite3": "12.10.0",
 		"drizzle-orm": "0.45.2"
+	},
+	"overrides": {
+		"cookie": "0.7.2",
+		"esbuild": "0.25.12"
 	}
 }
