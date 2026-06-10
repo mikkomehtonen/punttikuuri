@@ -1,5 +1,6 @@
 {
 	"app.name": "Punttikuuri",
+	"app.tagline": "Log your gym workouts",
 	"nav.exercises": "Exercises",
 	"nav.settings": "Settings",
 	"nav.logout": "Logout",

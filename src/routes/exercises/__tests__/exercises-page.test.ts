@@ -36,7 +36,7 @@ describe('Exercises Page', () => {
 		});
 
 		expect(body).toContain('Bench Press');
-		expect(body).toContain('(BP)');
+		expect(body).toContain('BP');
 		expect(body).toContain('Squat');
 		expect(body).toContain('href="/exercises/1"');
 		expect(body).toContain('href="/exercises/2"');

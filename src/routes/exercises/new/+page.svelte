@@ -2,6 +2,10 @@
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
+	import Button from '$lib/components/Button.svelte';
+	import Input from '$lib/components/Input.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import Alert from '$lib/components/Alert.svelte';
 
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
@@ -15,56 +19,50 @@
 	<title>{t('exercises.new', locale)} - {t('app.name', locale)}</title>
 </svelte:head>
 
-<h1 class="mb-6 text-2xl font-bold">{t('exercises.new', locale)}</h1>
+<h1 class="mb-8 text-2xl font-bold">{t('exercises.new', locale)}</h1>
 
-<form method="POST" class="flex flex-col gap-4">
-	{#if form?.error}
-		<div class="rounded-lg bg-red-100 p-3 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-			{form.error}
-		</div>
-	{/if}
+<div class="max-w-md">
+	<Card>
+		<form method="POST" class="flex flex-col gap-4">
+			{#if form?.error}
+				<Alert type="error">
+					{form.error}
+				</Alert>
+			{/if}
 
-	<label class="flex flex-col gap-1">
-		<span>{t('exercises.name', locale)}</span>
-		<input
-			name="name"
-			type="text"
-			bind:value={name}
-			required
-			maxlength={100}
-			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
-		/>
-	</label>
+			<Input
+				label={t('exercises.name', locale)}
+				name="name"
+				type="text"
+				bind:value={name}
+				required
+				maxlength={100}
+			/>
 
-	<label class="flex flex-col gap-1">
-		<span>{t('exercises.shortName', locale)}</span>
-		<input
-			name="short_name"
-			type="text"
-			bind:value={shortName}
-			maxlength={30}
-			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
-		/>
-	</label>
+			<Input
+				label={t('exercises.shortName', locale)}
+				name="short_name"
+				type="text"
+				bind:value={shortName}
+				maxlength={30}
+			/>
 
-	<label class="flex flex-col gap-1">
-		<span>{t('exercises.displayOrder', locale)}</span>
-		<input
-			name="display_order"
-			type="number"
-			bind:value={displayOrder}
-			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
-		/>
-	</label>
+			<Input
+				label={t('exercises.displayOrder', locale)}
+				name="display_order"
+				type="number"
+				bind:value={displayOrder}
+			/>
 
-	<button class="min-h-[44px] rounded-lg bg-blue-600 px-6 py-3 font-medium text-white">
-		{t('exercises.submit', locale)}
-	</button>
-</form>
+			<Button variant="primary" type="submit">
+				{t('exercises.submit', locale)}
+			</Button>
+		</form>
+	</Card>
+</div>
 
-<a
-	href="/exercises"
-	class="mt-4 flex inline-block min-h-[44px] min-w-[44px] items-center text-blue-600 underline dark:text-blue-400"
->
-	{t('exercises.back', locale)}
-</a>
+<div class="mt-4">
+	<Button variant="ghost" href="/exercises">
+		{t('exercises.back', locale)}
+	</Button>
+</div>

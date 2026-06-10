@@ -4,6 +4,7 @@
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { LayoutData } from './$types';
+	import Button from '$lib/components/Button.svelte';
 
 	let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
 
@@ -14,42 +15,52 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-	<header class="border-b border-gray-200 dark:border-gray-700">
+<div
+	class="min-h-screen bg-stone-50 font-sans text-stone-800 dark:bg-stone-900 dark:text-stone-100"
+>
+	<header class="bg-white shadow-sm dark:bg-stone-800">
 		<div class="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-			<a href="/exercises" class="text-lg font-bold">{t('app.name', locale)}</a>
+			<a href="/exercises" class="text-xl font-bold text-primary-600 dark:text-primary-400">
+				{t('app.name', locale)}
+			</a>
 			<nav class="flex gap-4">
 				{#if data.user}
 					<a
 						href="/exercises"
-						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
-						>{t('nav.exercises', locale)}</a
+						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-stone-600 hover:text-primary-600 dark:text-stone-300 dark:hover:text-primary-400"
 					>
+						{t('nav.exercises', locale)}
+					</a>
 					<a
 						href="/settings"
-						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
-						>{t('nav.settings', locale)}</a
+						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-stone-600 hover:text-primary-600 dark:text-stone-300 dark:hover:text-primary-400"
 					>
+						{t('nav.settings', locale)}
+					</a>
 					<form method="POST" action="/logout">
-						<button class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
-							>{t('nav.logout', locale)}</button
-						>
+						<Button variant="ghost" type="submit">
+							{t('nav.logout', locale)}
+						</Button>
 					</form>
 				{:else}
-					<a href="/login" class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
-						>{t('nav.login', locale)}</a
+					<a
+						href="/login"
+						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-stone-600 hover:text-primary-600 dark:text-stone-300 dark:hover:text-primary-400"
 					>
+						{t('nav.login', locale)}
+					</a>
 					<a
 						href="/register"
-						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
-						>{t('nav.register', locale)}</a
+						class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-stone-600 hover:text-primary-600 dark:text-stone-300 dark:hover:text-primary-400"
 					>
+						{t('nav.register', locale)}
+					</a>
 				{/if}
 			</nav>
 		</div>
 	</header>
 
-	<main class="mx-auto max-w-2xl px-4 py-6">
+	<main class="mx-auto max-w-2xl px-4 py-8">
 		{@render children()}
 	</main>
 </div>

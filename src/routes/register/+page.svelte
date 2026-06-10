@@ -2,6 +2,10 @@
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
+	import Button from '$lib/components/Button.svelte';
+	import Input from '$lib/components/Input.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import Alert from '$lib/components/Alert.svelte';
 
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
@@ -14,51 +18,47 @@
 	<title>{t('register.title', locale)} - {t('app.name', locale)}</title>
 </svelte:head>
 
-<h1 class="mb-6 text-2xl font-bold">{t('register.title', locale)}</h1>
+<h1 class="mb-8 text-2xl font-bold text-stone-800 dark:text-stone-100">
+	{t('register.title', locale)}
+</h1>
 
-<form method="POST" class="flex flex-col gap-4">
-	{#if form?.error}
-		<div class="rounded-lg bg-red-100 p-3 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-			{form.error}
-		</div>
-	{/if}
+<div class="mx-auto max-w-md">
+	<Card>
+		<form method="POST" class="flex flex-col gap-4">
+			{#if form?.error && form?.field !== 'username' && form?.field !== 'password'}
+				<Alert type="error">
+					{form.error}
+				</Alert>
+			{/if}
 
-	<label class="flex flex-col gap-1">
-		<span>{t('register.username', locale)}</span>
-		<input
-			name="username"
-			type="text"
-			bind:value={username}
-			required
-			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
-		/>
-		{#if form?.field === 'username' && form?.error}
-			<span class="text-sm text-red-600 dark:text-red-400">{form.error}</span>
-		{/if}
-	</label>
+			<Input
+				label={t('register.username', locale)}
+				name="username"
+				type="text"
+				bind:value={username}
+				required
+				error={form?.field === 'username' ? form?.error : undefined}
+			/>
 
-	<label class="flex flex-col gap-1">
-		<span>{t('register.password', locale)}</span>
-		<input
-			name="password"
-			type="password"
-			bind:value={password}
-			required
-			class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
-		/>
-		{#if form?.field === 'password' && form?.error}
-			<span class="text-sm text-red-600 dark:text-red-400">{form.error}</span>
-		{/if}
-	</label>
+			<Input
+				label={t('register.password', locale)}
+				name="password"
+				type="password"
+				bind:value={password}
+				required
+				error={form?.field === 'password' ? form?.error : undefined}
+			/>
 
-	<button class="min-h-[44px] rounded-lg bg-blue-600 px-6 py-3 font-medium text-white">
-		{t('register.submit', locale)}
-	</button>
-</form>
+			<Button variant="primary" type="submit">
+				{t('register.submit', locale)}
+			</Button>
+		</form>
+	</Card>
+</div>
 
-<p class="mt-4 text-gray-500 dark:text-gray-400">
-	{t('register.hasAccount', locale)}
-	<a href="/login" class="text-blue-600 underline dark:text-blue-400"
-		>{t('register.loginLink', locale)}</a
-	>
-</p>
+<div class="mt-4 text-center">
+	<Button variant="ghost" href="/login">
+		{t('register.hasAccount', locale)}
+		{t('register.loginLink', locale)}
+	</Button>
+</div>

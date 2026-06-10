@@ -63,8 +63,8 @@ describe('Task 1 - Project Scaffolding & Database Setup', () => {
 
 	it('should have dark mode styles that activate via dark class on html element', () => {
 		const layout = fs.readFileSync(path.resolve('src/routes/+layout.svelte'), 'utf-8');
-		expect(layout).toContain('dark:bg-gray-900');
-		expect(layout).toContain('dark:text-gray-100');
+		expect(layout).toContain('dark:bg-stone-900');
+		expect(layout).toContain('dark:text-stone-100');
 	});
 });
 
