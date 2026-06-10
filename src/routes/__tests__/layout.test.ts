@@ -80,6 +80,50 @@ describe('Layout', () => {
 	});
 });
 
+describe('Header responsive layout', () => {
+	const responsiveClasses = [
+		'flex-col',
+		'items-center',
+		'gap-2',
+		'sm:flex-row',
+		'sm:justify-between',
+		'sm:gap-0'
+	];
+
+	it.each(responsiveClasses)('applies responsive class %s on the header div', (cls) => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		expect(body).toContain(cls);
+	});
+
+	it('renders all responsive classes when user is logged in', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({
+					user: { id: 1, username: 'test', locale: 'en', theme: 'system' }
+				}),
+				children: snippet('content')
+			}
+		});
+		for (const cls of responsiveClasses) {
+			expect(body).toContain(cls);
+		}
+	});
+
+	it('renders all responsive classes with Finnish locale', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ locale: 'fi' }),
+				children: snippet('content')
+			}
+		});
+		for (const cls of responsiveClasses) {
+			expect(body).toContain(cls);
+		}
+	});
+});
+
 describe('layout.css', () => {
 	it('configures Tailwind v4 class-based dark mode with @custom-variant', () => {
 		const css = readFileSync(resolve(__dirname, '../layout.css'), 'utf-8');

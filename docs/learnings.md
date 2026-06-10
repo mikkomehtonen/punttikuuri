@@ -78,3 +78,12 @@ This avoids requiring the user to re-enter the same values repeatedly during tra
 **Area**: build
 **What happened**: Test output shows deprecation warning: `config.kit.csrf.checkOrigin` has been deprecated in favour of `csrf.trustedOrigins`.
 **Takeaway**: When updating SvelteKit config, use `csrf: { trustedOrigins: [...] }` instead of `csrf: { checkOrigin: false }`. The current config works but will need updating in a future SvelteKit version.
+
+---
+
+## Prettier checks all files, including pre-existing story markdown
+
+**Date**: 2026-06-10
+**Area**: workflow
+**What happened**: Acceptance reviewer failed on story 008 due to a pre-existing prettier formatting issue in `stories/007-fix-theme-setting/story.md` — a file not touched by story 008. `prettier --check .` scans the entire repo, not just changed files.
+**Takeaway**: Always run `prettier --check .` (not just on changed files) before the first reviewer run. If pre-existing formatting issues exist in other story files, fix them in the same commit to avoid blocking the acceptance reviewer.

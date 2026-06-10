@@ -40,7 +40,9 @@
 	class="min-h-screen bg-stone-50 font-sans text-stone-800 dark:bg-stone-900 dark:text-stone-100"
 >
 	<header class="bg-white shadow-sm dark:bg-stone-800">
-		<div class="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+		<div
+			class="mx-auto flex max-w-2xl flex-col items-center gap-2 px-4 py-3 sm:flex-row sm:justify-between sm:gap-0"
+		>
 			<a href="/exercises" class="text-xl font-bold text-primary-600 dark:text-primary-400">
 				{t('app.name', locale)}
 			</a>
