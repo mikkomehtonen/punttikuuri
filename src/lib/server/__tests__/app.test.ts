@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { isProtectedRoute, isAuthRoute } from '../route-guards';
 import {
 	validateWeight,
@@ -577,13 +576,18 @@ describe('Task 3 - Short name validation', () => {
 });
 
 describe('Story 005 - npm audit vulnerability fixes', () => {
-	const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-	const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'));
+	const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
+	const lockfile = JSON.parse(fs.readFileSync(path.resolve('package-lock.json'), 'utf-8'));
 
 	it('should have npm overrides for cookie and esbuild and upgraded SvelteKit', () => {
 		expect(pkg.overrides).toBeDefined();
 		expect(pkg.overrides.cookie).toBe('0.7.2');
 		expect(pkg.overrides.esbuild).toBe('0.25.12');
 		expect(pkg.devDependencies['@sveltejs/kit']).toBe('2.64.0');
+	});
+
+	it('should resolve cookie and esbuild to patched versions in lockfile', () => {
+		expect(lockfile.packages['node_modules/cookie'].version).toBe('0.7.2');
+		expect(lockfile.packages['node_modules/esbuild'].version).toBe('0.25.12');
 	});
 });
