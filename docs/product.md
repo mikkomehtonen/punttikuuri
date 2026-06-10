@@ -11,6 +11,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **User Preferences** — Language (English/Finnish) and theme (light/dark/system) selection persisted per user ([story](stories/001-gym-workout-logger/story.md))
 - **PWA** — Installable on mobile devices for a native-app-like experience ([story](stories/001-gym-workout-logger/story.md))
 - **Set Prefill** — Weight and reps inputs auto-fill from the most recent set of the same exercise ([story](stories/003-prefill-set-values/story.md))
+- **Modern UI** — Warm amber/orange color palette, Inter typeface, reusable Button/Input/Card/Alert/Badge components, custom dumbbell favicon, cohesive dark/light theme with stone surface tones ([story](stories/004-redesign-ui-style/story.md))
 
 ## Non-Goals
 
