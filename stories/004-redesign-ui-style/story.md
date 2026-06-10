@@ -23,9 +23,9 @@ Replace the default blue accent with an amber/orange palette and set Inter as th
 
 Primary palette (amber scale, matching Tailwind's built-in amber values):
 
-| Token | Value |
-|---|---|
-| `--color-primary-50` | `#fffbeb` |
+| Token                 | Value     |
+| --------------------- | --------- |
+| `--color-primary-50`  | `#fffbeb` |
 | `--color-primary-100` | `#fef3c7` |
 | `--color-primary-200` | `#fde68a` |
 | `--color-primary-300` | `#fcd34d` |
@@ -39,8 +39,8 @@ Primary palette (amber scale, matching Tailwind's built-in amber values):
 
 Font override:
 
-| Token | Value |
-|---|---|
+| Token         | Value                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `--font-sans` | `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif` |
 
 Surface colors use Tailwind's built-in `stone` scale (warm gray) instead of `gray` (cool gray). No custom tokens needed — just switch class references from `gray-*` to `stone-*`.
@@ -59,31 +59,32 @@ Five Svelte 5 components are created in `src/lib/components/`. Each uses `$props
 
 **Button.svelte** — Renders `<a>` when `href` is provided, `<button>` otherwise.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Visual style |
-| `href` | `string \| undefined` | `undefined` | If set, renders as `<a>` |
-| `type` | `string` | `'button'` | HTML button type (ignored when `href` is set) |
-| `children` | `Snippet` | required | Button content |
+| Prop       | Type                                  | Default     | Description                                   |
+| ---------- | ------------------------------------- | ----------- | --------------------------------------------- |
+| `variant`  | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Visual style                                  |
+| `href`     | `string \| undefined`                 | `undefined` | If set, renders as `<a>`                      |
+| `type`     | `string`                              | `'button'`  | HTML button type (ignored when `href` is set) |
+| `children` | `Snippet`                             | required    | Button content                                |
 
 Variant classes:
+
 - **primary**: `inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-primary-600 px-6 py-3 font-medium text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900`
 - **secondary**: `inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border-2 border-primary-600 px-6 py-3 font-medium text-primary-600 transition-colors hover:bg-primary-50 dark:border-primary-500 dark:text-primary-400 dark:hover:bg-primary-950`
 - **ghost**: `inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl px-4 py-3 font-medium text-stone-600 transition-colors hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800`
 
 **Input.svelte** — Label + input + optional error message.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `label` | `string` | required | Label text |
-| `name` | `string` | required | Input name attribute |
-| `type` | `string` | `'text'` | Input type |
-| `inputmode` | `string \| undefined` | `undefined` | Input inputmode |
-| `value` | `string` | `$bindable('')` | Two-way bound value |
-| `required` | `boolean` | `false` | HTML required attribute |
-| `maxlength` | `number \| undefined` | `undefined` | Max length |
-| `placeholder` | `string \| undefined` | `undefined` | Placeholder text |
-| `error` | `string \| undefined` | `undefined` | Error message shown below input |
+| Prop          | Type                  | Default         | Description                     |
+| ------------- | --------------------- | --------------- | ------------------------------- |
+| `label`       | `string`              | required        | Label text                      |
+| `name`        | `string`              | required        | Input name attribute            |
+| `type`        | `string`              | `'text'`        | Input type                      |
+| `inputmode`   | `string \| undefined` | `undefined`     | Input inputmode                 |
+| `value`       | `string`              | `$bindable('')` | Two-way bound value             |
+| `required`    | `boolean`             | `false`         | HTML required attribute         |
+| `maxlength`   | `number \| undefined` | `undefined`     | Max length                      |
+| `placeholder` | `string \| undefined` | `undefined`     | Placeholder text                |
+| `error`       | `string \| undefined` | `undefined`     | Error message shown below input |
 
 Input element classes: `min-h-[44px] w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 shadow-sm transition-colors placeholder:text-stone-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-primary-500 dark:focus:ring-primary-500/20`
 
@@ -93,10 +94,10 @@ Error classes: `mt-1 text-sm text-red-600 dark:text-red-400`
 
 **Card.svelte** — Container with optional link behavior.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `href` | `string \| undefined` | `undefined` | If set, renders as `<a>` |
-| `children` | `Snippet` | required | Card content |
+| Prop       | Type                  | Default     | Description              |
+| ---------- | --------------------- | ----------- | ------------------------ |
+| `href`     | `string \| undefined` | `undefined` | If set, renders as `<a>` |
+| `children` | `Snippet`             | required    | Card content             |
 
 Card classes: `rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-stone-700 dark:bg-stone-800`
 
@@ -104,18 +105,18 @@ When `href` is provided, adds `block` class and renders as `<a>`.
 
 **Alert.svelte** — Error or success message banner.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `type` | `'error' \| 'success'` | required | Alert style |
-| `children` | `Snippet` | required | Alert content |
+| Prop       | Type                   | Default  | Description   |
+| ---------- | ---------------------- | -------- | ------------- |
+| `type`     | `'error' \| 'success'` | required | Alert style   |
+| `children` | `Snippet`              | required | Alert content |
 
 - **error**: `rounded-xl border-l-4 border-red-400 bg-red-50 p-4 text-red-700 dark:border-red-500 dark:bg-red-950/50 dark:text-red-300`
 - **success**: `rounded-xl border-l-4 border-green-400 bg-green-50 p-4 text-green-700 dark:border-green-500 dark:bg-green-950/50 dark:text-green-300`
 
 **Badge.svelte** — Small inline label for short names.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
+| Prop       | Type      | Default  | Description   |
+| ---------- | --------- | -------- | ------------- |
 | `children` | `Snippet` | required | Badge content |
 
 Badge classes: `ml-2 inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300`
@@ -125,6 +126,7 @@ Badge classes: `ml-2 inline-flex items-center rounded-md bg-primary-50 px-2 py-0
 Every page file is updated to use the new components and `stone`/`primary` tokens instead of `gray`/`blue`. The structural HTML and all i18n keys remain identical (except the new `app.tagline` key). All existing server-side logic and data flow are untouched.
 
 **Layout** (`+layout.svelte`):
+
 - Outer div: `min-h-screen bg-stone-50 font-sans text-stone-800 dark:bg-stone-900 dark:text-stone-100`
 - Header: `bg-white shadow-sm dark:bg-stone-800` (replaces `border-b`)
 - App name link: `text-xl font-bold text-primary-600 dark:text-primary-400`
@@ -133,12 +135,14 @@ Every page file is updated to use the new components and `stone`/`primary` token
 - Main: `mx-auto max-w-2xl px-4 py-8`
 
 **Landing page** (`+page.svelte`):
+
 - Centered hero with `py-20` spacing
 - App name: `text-4xl font-bold text-primary-600 dark:text-primary-400`
 - Tagline: `mt-2 text-lg text-stone-500 dark:text-stone-400` using new `app.tagline` key
 - CTA buttons: `<Button variant="primary" href="/login">` and `<Button variant="secondary" href="/register">`
 
 **Login page** (`login/+page.svelte`):
+
 - Title: `mb-8 text-2xl font-bold text-stone-800 dark:text-stone-100`
 - Form wrapped in `<Card>` with `max-w-md mx-auto`
 - Inputs: `<Input>` components
@@ -147,11 +151,13 @@ Every page file is updated to use the new components and `stone`/`primary` token
 - Register link: `<Button variant="ghost" href="/register">`
 
 **Register page** (`register/+page.svelte`):
+
 - Same structure as login
 - Field-level errors passed to `<Input error={...}>`
 - Top-level error: `<Alert type="error">`
 
 **Exercises list** (`exercises/+page.svelte`):
+
 - Title + create button row: `mb-8 flex items-center justify-between`
 - Create button: `<Button variant="primary" href="/exercises/new">`
 - Empty state: `<Card>` with centered text and create link
@@ -159,6 +165,7 @@ Every page file is updated to use the new components and `stone`/`primary` token
 - Short name in parentheses replaced by `<Badge>` component
 
 **Exercise detail** (`exercises/[id]/+page.svelte`):
+
 - Back link: `<Button variant="ghost" href="/exercises">`
 - Title: `mb-8 text-2xl font-bold`
 - Today section: `<Card>` wrapping the form
@@ -169,6 +176,7 @@ Every page file is updated to use the new components and `stone`/`primary` token
 - History section: date as `text-sm font-medium text-stone-500`, sets in `<Card>` items
 
 **New exercise** (`exercises/new/+page.svelte`):
+
 - Form wrapped in `<Card>` with `max-w-md`
 - Inputs: `<Input>` components
 - Submit: `<Button variant="primary" type="submit">`
@@ -176,6 +184,7 @@ Every page file is updated to use the new components and `stone`/`primary` token
 - Back link: `<Button variant="ghost" href="/exercises">`
 
 **Settings** (`settings/+page.svelte`):
+
 - Form wrapped in `<Card>` with `max-w-md`
 - Success: `<Alert type="success">`
 - Radio options styled with `accent-primary-600`
@@ -188,12 +197,14 @@ Replace `src/lib/assets/favicon.svg` with a custom dumbbell icon in primary-600 
 ### PWA manifest
 
 Update `src/lib/pwa-manifest.ts`:
+
 - `theme_color`: `'#d97706'` (was `'#2563eb'`)
 - `background_color`: `'#fafaf9'` (stone-50, was `'#ffffff'`)
 
 ### i18n additions
 
 Add one new key to both `en.json` and `fi.json`:
+
 - `app.tagline`: `"Log your gym workouts"` / `"Kirjaa salitreenisi"`
 
 ## Tasks
