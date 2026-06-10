@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'svelte/server';
 import { createRawSnippet } from 'svelte';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import Layout from '../+layout.svelte';
 
 function snippet(text: string) {
@@ -75,5 +77,22 @@ describe('Layout', () => {
 		});
 		expect(body).toContain('Logout');
 		expect(body).toContain('text-stone-600');
+	});
+});
+
+describe('layout.css', () => {
+	it('configures Tailwind v4 class-based dark mode with @custom-variant', () => {
+		const css = readFileSync(resolve(__dirname, '../layout.css'), 'utf-8');
+		expect(css).toContain('@custom-variant dark (&:where(.dark, .dark *));');
+	});
+
+	it('places @custom-variant after @import and before @theme', () => {
+		const css = readFileSync(resolve(__dirname, '../layout.css'), 'utf-8');
+		const importIndex = css.indexOf("@import 'tailwindcss'");
+		const variantIndex = css.indexOf('@custom-variant dark');
+		const themeIndex = css.indexOf('@theme');
+		expect(importIndex).toBeGreaterThanOrEqual(0);
+		expect(variantIndex).toBeGreaterThan(importIndex);
+		expect(themeIndex).toBeGreaterThan(variantIndex);
 	});
 });

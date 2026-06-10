@@ -23,7 +23,25 @@ This avoids requiring the user to re-enter the same values repeatedly during tra
 **Date**: 2026-06-10
 **Area**: testing
 **What happened**: When testing Svelte 5 components that accept `children: Snippet` props via `render()` from `svelte/server`, you can't pass a plain string. The `createRawSnippet` function from `svelte` is needed to create a snippet that renders text content.
-**Takeaway**: Use `createRawSnippet(() => ({ render: () => 'text content' }))` to pass children snippets in server-side component tests. Import it from `svelte`.
+**Takeaway**: Use `createRawSnippet(() => ({ render: () => 'text content' }))` to pass children snippets in server-side component tests. For client-side (DOM) tests using `@testing-library/svelte`, the render function must return HTML for a single element: `createRawSnippet(() => ({ render: () => '<span>text</span>' }))`. Plain text causes `invalid_raw_snippet_render` warnings in DOM context.
+
+---
+
+## Vitest browser project needs resolve.conditions for client-side Svelte
+
+**Date**: 2026-06-10
+**Area**: testing
+**What happened**: Tests using `@testing-library/svelte`'s `render()` (which calls `Svelte.mount`) failed with `mount(...) is not available on the server` even though the vitest browser project uses jsdom environment. The `svelte` package exports `default` as the server entry and `browser` as the client entry, but vitest was resolving to the server entry.
+**Takeaway**: Add `resolve: { conditions: ['browser'] }` to the vitest browser project config alongside the `environment: 'jsdom'` setting. This ensures `svelte` resolves to the client entry with `mount`, `unmount`, and `$effect` support.
+
+---
+
+## jsdom does not implement window.matchMedia
+
+**Date**: 2026-06-10
+**Area**: testing
+**What happened**: `vi.spyOn(window, 'matchMedia')` fails with "can only spy on a function. Received undefined" because jsdom does not define `window.matchMedia` at all.
+**Takeaway**: Assign a mock directly: `window.matchMedia = vi.fn().mockReturnValue(mockMediaQueryList)`. Create a mock object with `matches`, `addEventListener`, and `removeEventListener` methods. Use `vi.restoreAllMocks()` in `afterEach` to clean up.
 
 ---
 
