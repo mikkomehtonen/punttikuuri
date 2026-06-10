@@ -7,7 +7,7 @@ description: >
   Output: completion report with reviewer SHA verdicts.
 mode: all
 temperature: 0.2
-model: opencode-go/deepseek-v4-flash
+model: firepass/accounts/fireworks/models/gpt-oss-120b
 tools:
   question: false
   task: true
