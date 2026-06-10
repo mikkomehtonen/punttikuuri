@@ -127,6 +127,7 @@ describe('Exercise Detail Page', () => {
 		});
 
 		expect(body).toContain('Weight must be a positive number');
+		expect(body).toContain('border-red-400');
 	});
 
 	it('should show Finnish translations when locale is fi', () => {
@@ -140,13 +141,46 @@ describe('Exercise Detail Page', () => {
 		expect(body).toContain('Tallenna sarja');
 	});
 
-	it('should have a back link to exercises', () => {
+	it('should have a back link to exercises with ghost variant', () => {
 		const { body } = render(ExerciseDetailPage, {
 			props: { data: makeData(), form: null }
 		});
 
 		expect(body).toContain('href="/exercises"');
 		expect(body).toContain('Back to exercises');
+		expect(body).toContain('text-stone-600');
+	});
+
+	it('should render submit button with primary variant', () => {
+		const { body } = render(ExerciseDetailPage, {
+			props: { data: makeData(), form: null }
+		});
+
+		expect(body).toContain('Log Set');
+		expect(body).toContain('bg-primary-600');
+	});
+
+	it('should render today sets as Card components', () => {
+		const { body } = render(ExerciseDetailPage, {
+			props: {
+				data: makeData({
+					todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+				}),
+				form: null
+			}
+		});
+
+		expect(body).toContain('Set 1');
+		expect(body).toContain('rounded-xl');
+	});
+
+	it('should render weight and reps Input components', () => {
+		const { body } = render(ExerciseDetailPage, {
+			props: { data: makeData(), form: null }
+		});
+
+		expect(body).toContain('name="weight_kg"');
+		expect(body).toContain('name="repetitions"');
 	});
 
 	describe('prefill from lastSet', () => {

@@ -45,18 +45,26 @@ describe('Settings Page', () => {
 		expect(body).toContain('Suomi');
 	});
 
-	it('should have a save button', () => {
+	it('should have a save button with primary variant', () => {
 		const { body } = render(SettingsPage, { props: { data: makeData() } });
 
 		expect(body).toContain('Save');
+		expect(body).toContain('bg-primary-600');
 	});
 
-	it('should show saved confirmation when saved is true', () => {
+	it('should show saved confirmation with success Alert when saved is true', () => {
 		const { body } = render(SettingsPage, {
 			props: { data: makeData({ saved: true }) }
 		});
 
 		expect(body).toContain('Settings saved');
+		expect(body).toContain('border-green-400');
+	});
+
+	it('should render radio inputs with accent-primary-600 class', () => {
+		const { body } = render(SettingsPage, { props: { data: makeData() } });
+
+		expect(body).toContain('accent-primary-600');
 	});
 
 	it('should display Finnish translations when locale is fi', () => {

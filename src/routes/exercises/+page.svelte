@@ -39,7 +39,7 @@
 				<Card href="/exercises/{exercise.id}">
 					<span class="font-medium">{exercise.name}</span>
 					{#if exercise.short_name}
-						<Badge>{exercise.short_name}</Badge>
+						<span class="ml-2"><Badge>{exercise.short_name}</Badge></span>
 					{/if}
 				</Card>
 			</li>

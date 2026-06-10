@@ -12,7 +12,7 @@
 	}: {
 		label: string;
 		name: string;
-		type?: string;
+		type?: 'text' | 'password' | 'number' | 'email' | 'tel' | 'url' | 'search';
 		inputmode?: 'text' | 'search' | 'none' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal';
 		value?: string;
 		required?: boolean;

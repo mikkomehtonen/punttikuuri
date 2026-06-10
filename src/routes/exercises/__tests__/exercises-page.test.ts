@@ -71,5 +71,39 @@ describe('Exercises Page', () => {
 
 		expect(body).toContain('href="/exercises/new"');
 		expect(body).toContain('Create Exercise');
+		expect(body).toContain('bg-primary-600');
+	});
+
+	it('should render each exercise as a Card with href', () => {
+		const { body } = render(ExercisesPage, {
+			props: {
+				data: {
+					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+				}
+			}
+		});
+
+		expect(body).toContain('href="/exercises/1"');
+		expect(body).toContain('rounded-xl');
+	});
+
+	it('should render exercise short_name inside a Badge component', () => {
+		const { body } = render(ExercisesPage, {
+			props: {
+				data: {
+					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+				}
+			}
+		});
+
+		expect(body).toContain('BP');
+		expect(body).toContain('bg-primary-50');
+		expect(body).toContain('rounded-md');
 	});
 });
