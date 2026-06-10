@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - '3000:3000'
+      - '3106:3000'
     volumes:
       - /data/punttikuuri:/app/data
     restart: unless-stopped
