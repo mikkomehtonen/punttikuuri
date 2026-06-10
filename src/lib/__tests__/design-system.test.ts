@@ -51,7 +51,7 @@ describe('Design System Foundation', () => {
 	});
 
 	describe('favicon.svg dumbbell icon', () => {
-		const svg = fs.readFileSync(path.resolve('src/lib/assets/favicon.svg'), 'utf-8');
+		const svg = fs.readFileSync(path.resolve('static/favicon.svg'), 'utf-8');
 
 		it('contains three <rect> elements forming a dumbbell shape', () => {
 			const rectMatches = svg.match(/<rect /g);

@@ -15,6 +15,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Secure Dependencies** — All npm audit vulnerabilities resolved via overrides for `cookie` (0.7.2) and `esbuild` (0.25.12), plus SvelteKit upgrade to 2.64.0 ([story](stories/005-fix-npm-vulnerabilities/story.md))
 - **HTTP Cookie Fix** — Auth cookies explicitly set with `secure: false` so login works over plain HTTP (Tailscale) where SvelteKit would otherwise default to `Secure`-only cookies ([story](stories/006-fix-login-redirect-loop/story.md))
 - **Responsive Header** — Header stacks vertically on mobile to prevent Finnish nav text from overlapping the app name ([story](stories/008-fix-header-text-overlap/story.md))
+- **Favicon HTTP Access** — Favicon SVG served at `/favicon.svg` for external service dashboards, moved from Vite-inlined asset to SvelteKit static directory ([story](stories/009-serve-favicon-svg/story.md))
 
 ## Non-Goals
 

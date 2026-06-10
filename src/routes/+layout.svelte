@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { LayoutData } from './$types';
@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href="/favicon.svg" />
 </svelte:head>
 
 <div
