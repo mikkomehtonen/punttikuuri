@@ -124,6 +124,83 @@ describe('Header responsive layout', () => {
 	});
 });
 
+describe('Header logo', () => {
+	function appNameLink(body: string) {
+		const match = body.match(/<a[^>]*href="\/exercises"[^>]*>[\s\S]*?<\/a>/);
+		expect(match).toBeTruthy();
+		return match![0];
+	}
+
+	it.each(['en', 'fi'] as const)(
+		'renders the favicon logo inside the app name link with %s locale',
+		(locale) => {
+			const { body } = render(Layout, {
+				props: { data: makeData({ locale }), children: snippet('content') }
+			});
+			expect(appNameLink(body)).toContain('<img src="/favicon.svg"');
+		}
+	);
+
+	it('renders the logo before the app name text inside the app name link', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		const linkHtml = appNameLink(body);
+		const logoIndex = linkHtml.indexOf('<img src="/favicon.svg"');
+		const nameIndex = linkHtml.indexOf('Punttikuuri');
+		expect(logoIndex).toBeGreaterThanOrEqual(0);
+		expect(nameIndex).toBeGreaterThan(logoIndex);
+	});
+
+	it.each(['en', 'fi'] as const)(
+		'still renders the app name text "Punttikuuri" with %s locale',
+		(locale) => {
+			const { body } = render(Layout, {
+				props: { data: makeData({ locale }), children: snippet('content') }
+			});
+			expect(body).toContain('Punttikuuri');
+		}
+	);
+
+	it('marks the logo image as decorative with an empty alt', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		expect(appNameLink(body)).toContain('<img src="/favicon.svg" alt="" class="h-7 w-7"');
+	});
+
+	it('lays out the logo and title in a row inside the app name link', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		const linkHtml = appNameLink(body);
+		expect(linkHtml).toContain('inline-flex');
+		expect(linkHtml).toContain('items-center');
+		expect(linkHtml).toContain('gap-2');
+	});
+
+	it('sizes the logo image to match the title line height', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		const linkHtml = appNameLink(body);
+		expect(linkHtml).toContain('h-7');
+		expect(linkHtml).toContain('w-7');
+	});
+
+	it('preserves the app name link styling and target', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData(), children: snippet('content') }
+		});
+		const linkHtml = appNameLink(body);
+		expect(linkHtml).toContain('text-xl');
+		expect(linkHtml).toContain('font-bold');
+		expect(linkHtml).toContain('text-primary-600');
+		expect(linkHtml).toContain('dark:text-primary-400');
+		expect(linkHtml).toContain('href="/exercises"');
+	});
+});
+
 describe('layout.css', () => {
 	it('configures Tailwind v4 class-based dark mode with @custom-variant', () => {
 		const css = readFileSync(resolve(__dirname, '../layout.css'), 'utf-8');

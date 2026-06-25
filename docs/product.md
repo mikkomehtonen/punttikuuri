@@ -16,6 +16,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **HTTP Cookie Fix** — Auth cookies explicitly set with `secure: false` so login works over plain HTTP (Tailscale) where SvelteKit would otherwise default to `Secure`-only cookies ([story](stories/006-fix-login-redirect-loop/story.md))
 - **Responsive Header** — Header stacks vertically on mobile to prevent Finnish nav text from overlapping the app name ([story](stories/008-fix-header-text-overlap/story.md))
 - **Favicon HTTP Access** — Favicon SVG served at `/favicon.svg` for external service dashboards, moved from Vite-inlined asset to SvelteKit static directory ([story](stories/009-serve-favicon-svg/story.md))
+- **Header Logo** — Dumbbell logo (`favicon.svg`) displayed to the left of the "Punttikuuri" title in the header, sharing the single source of truth with the favicon and PWA manifest ([story](stories/010-add-logo-to-title/story.md))
 
 ## Non-Goals
 
