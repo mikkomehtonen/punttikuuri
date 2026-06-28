@@ -6,3 +6,5 @@ services:
     volumes:
       - /data/punttikuuri:/app/data
     restart: unless-stopped
+    environment:
+      - PUBLIC_LOGO_LINK_URL=${LOGO_LINK_URL}

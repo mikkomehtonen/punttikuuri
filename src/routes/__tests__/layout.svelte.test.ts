@@ -12,6 +12,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		locale: 'en' as const,
 		theme: 'system' as const,
 		user: null as { id: number; username: string; locale: 'en'; theme: 'system' } | null,
+		logoLinkUrl: '',
 		...overrides
 	};
 }

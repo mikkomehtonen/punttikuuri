@@ -17,6 +17,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Responsive Header** — Header stacks vertically on mobile to prevent Finnish nav text from overlapping the app name ([story](stories/008-fix-header-text-overlap/story.md))
 - **Favicon HTTP Access** — Favicon SVG served at `/favicon.svg` for external service dashboards, moved from Vite-inlined asset to SvelteKit static directory ([story](stories/009-serve-favicon-svg/story.md))
 - **Header Logo** — Dumbbell logo (`favicon.svg`) displayed to the left of the "Punttikuuri" title in the header, sharing the single source of truth with the favicon and PWA manifest ([story](stories/010-add-logo-to-title/story.md))
+- **Logo Link** — Header logo is a separate link whose target is read from the `LOGO_LINK_URL` environment variable; when unset, the logo renders as a plain decorative image ([story](stories/011-logo-link-env/story.md))
 
 ## Non-Goals
 

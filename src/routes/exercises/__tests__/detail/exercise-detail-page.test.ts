@@ -14,6 +14,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		locale: 'en' as const,
 		theme: 'system' as const,
 		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+		logoLinkUrl: '',
 		...overrides
 	};
 }

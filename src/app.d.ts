@@ -16,6 +16,7 @@ declare global {
 		interface PageData {
 			locale: 'en' | 'fi';
 			theme: 'light' | 'dark' | 'system';
+			logoLinkUrl: string;
 		}
 		// interface PageState {}
 		// interface Platform {}

@@ -43,13 +43,18 @@
 		<div
 			class="mx-auto flex max-w-2xl flex-col items-center gap-2 px-4 py-3 sm:flex-row sm:justify-between sm:gap-0"
 		>
-			<a
-				href="/exercises"
-				class="inline-flex items-center gap-2 text-xl font-bold text-primary-600 dark:text-primary-400"
-			>
-				<img src="/favicon.svg" alt="" class="h-7 w-7" />
-				{t('app.name', locale)}
-			</a>
+			<div class="inline-flex items-center gap-2">
+				{#if data.logoLinkUrl}
+					<a href={data.logoLinkUrl} class="inline-flex items-center">
+						<img src="/favicon.svg" alt="" class="h-7 w-7" />
+					</a>
+				{:else}
+					<img src="/favicon.svg" alt="" class="h-7 w-7" />
+				{/if}
+				<a href="/exercises" class="text-xl font-bold text-primary-600 dark:text-primary-400">
+					{t('app.name', locale)}
+				</a>
+			</div>
 			<nav class="flex gap-4">
 				{#if data.user}
 					<a

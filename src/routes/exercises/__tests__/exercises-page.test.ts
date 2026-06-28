@@ -10,7 +10,8 @@ describe('Exercises Page', () => {
 					exercises: [],
 					locale: 'en' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});
@@ -30,7 +31,8 @@ describe('Exercises Page', () => {
 					],
 					locale: 'en' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});
@@ -49,7 +51,8 @@ describe('Exercises Page', () => {
 					exercises: [],
 					locale: 'fi' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});
@@ -64,7 +67,8 @@ describe('Exercises Page', () => {
 					exercises: [{ id: 1, name: 'Test', short_name: null }],
 					locale: 'en' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});
@@ -81,7 +85,8 @@ describe('Exercises Page', () => {
 					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
 					locale: 'en' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});
@@ -97,7 +102,8 @@ describe('Exercises Page', () => {
 					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
 					locale: 'en' as const,
 					theme: 'system' as const,
-					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const }
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: ''
 				}
 			}
 		});

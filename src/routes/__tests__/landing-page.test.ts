@@ -7,6 +7,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		locale: 'en' as const,
 		theme: 'system' as const,
 		user: null,
+		logoLinkUrl: '',
 		...overrides
 	};
 }

@@ -54,6 +54,24 @@
 
 ---
 
+## SvelteKit public env vars must use the `PUBLIC_` prefix
+
+**Date**: 2026-06-28
+**Area**: architecture | SvelteKit | environment variables
+**What happened**: Story 011 originally specified reading `LOGO_LINK_URL` from `$env/dynamic/public`. SvelteKit 2.64.0 only exposes variables matching `config.kit.env.publicPrefix` (default `PUBLIC_*`) through that module, so the code would not type-check or resolve at runtime. The env var had to be renamed to `PUBLIC_LOGO_LINK_URL`.
+**Takeaway**: When adding a runtime-configurable value that must be readable on the server (and potentially the client), name it `PUBLIC_<NAME>` and import it from `$env/dynamic/public`. Non-prefixed variables belong in `$env/dynamic/private` and are server-only.
+
+---
+
+## Adding a field to `App.PageData` ripples to every page test
+
+**Date**: 2026-06-28
+**Area**: testing | TypeScript | SvelteKit
+**What happened**: Adding `logoLinkUrl: string` to `App.PageData` made it a required field on every page component's `data` prop. Every `makeData()` helper in page tests (landing, login, register, settings, exercises, etc.) had to include `logoLinkUrl: ''`, not just the layout tests.
+**Takeaway**: Before changing `App.PageData`, search for all `makeData` helpers and inline `data:` objects in `*.test.ts` files and update them in the same commit to keep `svelte-check` green.
+
+---
+
 ## Full test suite has pre-existing environment failures
 
 **Date**: 2026-06-25

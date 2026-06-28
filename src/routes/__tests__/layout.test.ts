@@ -14,6 +14,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		locale: 'en' as const,
 		theme: 'system' as const,
 		user: null as { id: number; username: string; locale: 'en'; theme: 'system' } | null,
+		logoLinkUrl: '',
 		...overrides
 	};
 }
@@ -131,25 +132,82 @@ describe('Header logo', () => {
 		return match![0];
 	}
 
-	it.each(['en', 'fi'] as const)(
-		'renders the favicon logo inside the app name link with %s locale',
-		(locale) => {
-			const { body } = render(Layout, {
-				props: { data: makeData({ locale }), children: snippet('content') }
-			});
-			expect(appNameLink(body)).toContain('<img src="/favicon.svg"');
-		}
-	);
+	function logoLink(body: string, href: string) {
+		const match = body.match(
+			new RegExp(
+				`<a[^>]*href="${href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>[\\s\\S]*?<\\/a>`
+			)
+		);
+		expect(match).toBeTruthy();
+		return match![0];
+	}
 
-	it('renders the logo before the app name text inside the app name link', () => {
+	it('wraps the favicon logo in a link when logoLinkUrl is set', () => {
 		const { body } = render(Layout, {
-			props: { data: makeData(), children: snippet('content') }
+			props: {
+				data: makeData({ logoLinkUrl: 'https://example.com' }),
+				children: snippet('content')
+			}
+		});
+		expect(logoLink(body, 'https://example.com')).toContain('<img src="/favicon.svg"');
+	});
+
+	it('wraps the favicon logo in a link for a relative logoLinkUrl', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ logoLinkUrl: '/some-page' }),
+				children: snippet('content')
+			}
+		});
+		expect(logoLink(body, '/some-page')).toContain('<img src="/favicon.svg"');
+	});
+
+	it('does not include the app name text inside the logo link', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ logoLinkUrl: 'https://example.com' }),
+				children: snippet('content')
+			}
+		});
+		expect(logoLink(body, 'https://example.com')).not.toContain('Punttikuuri');
+	});
+
+	it('renders the app name text in a separate link without the logo', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ logoLinkUrl: 'https://example.com' }),
+				children: snippet('content')
+			}
 		});
 		const linkHtml = appNameLink(body);
-		const logoIndex = linkHtml.indexOf('<img src="/favicon.svg"');
-		const nameIndex = linkHtml.indexOf('Punttikuuri');
-		expect(logoIndex).toBeGreaterThanOrEqual(0);
-		expect(nameIndex).toBeGreaterThan(logoIndex);
+		expect(linkHtml).toContain('Punttikuuri');
+		expect(linkHtml).not.toContain('<img');
+	});
+
+	it('does not add a target attribute to the logo link', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ logoLinkUrl: 'https://example.com' }),
+				children: snippet('content')
+			}
+		});
+		expect(logoLink(body, 'https://example.com')).not.toContain('target=');
+	});
+
+	it('renders the logo as a plain img when logoLinkUrl is empty', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData({ logoLinkUrl: '' }), children: snippet('content') }
+		});
+		expect(body).toContain('<img src="/favicon.svg"');
+		expect(body).not.toMatch(/<a[^>]*href="[^"]*"[^>]*>\s*<img src="\/favicon\.svg"/);
+	});
+
+	it('renders the logo as a plain img when logoLinkUrl is omitted', () => {
+		const { body } = render(Layout, {
+			props: { data: makeData({ logoLinkUrl: undefined }), children: snippet('content') }
+		});
+		expect(body).toContain('<img src="/favicon.svg"');
+		expect(body).not.toMatch(/<a[^>]*href="[^"]*"[^>]*>\s*<img src="\/favicon\.svg"/);
 	});
 
 	it.each(['en', 'fi'] as const)(
@@ -166,26 +224,41 @@ describe('Header logo', () => {
 		const { body } = render(Layout, {
 			props: { data: makeData(), children: snippet('content') }
 		});
-		expect(appNameLink(body)).toContain('<img src="/favicon.svg" alt="" class="h-7 w-7"');
+		expect(body).toContain('<img src="/favicon.svg" alt="" class="h-7 w-7"');
 	});
 
-	it('lays out the logo and title in a row inside the app name link', () => {
+	it('preserves logo image attributes when wrapped in a link', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({ logoLinkUrl: 'https://example.com' }),
+				children: snippet('content')
+			}
+		});
+		expect(logoLink(body, 'https://example.com')).toContain(
+			'<img src="/favicon.svg" alt="" class="h-7 w-7"'
+		);
+	});
+
+	it('lays out the logo and title in a row inside the wrapper', () => {
 		const { body } = render(Layout, {
 			props: { data: makeData(), children: snippet('content') }
 		});
-		const linkHtml = appNameLink(body);
-		expect(linkHtml).toContain('inline-flex');
-		expect(linkHtml).toContain('items-center');
-		expect(linkHtml).toContain('gap-2');
+		const wrapperMatch = body.match(/<div[^>]*class="[^"]*inline-flex[^"]*"[^>]*>[\s\S]*?<\/div>/);
+		expect(wrapperMatch).toBeTruthy();
+		const wrapperHtml = wrapperMatch![0];
+		expect(wrapperHtml).toContain('inline-flex');
+		expect(wrapperHtml).toContain('items-center');
+		expect(wrapperHtml).toContain('gap-2');
+		expect(wrapperHtml).toContain('<img src="/favicon.svg"');
+		expect(wrapperHtml).toContain('Punttikuuri');
 	});
 
 	it('sizes the logo image to match the title line height', () => {
 		const { body } = render(Layout, {
 			props: { data: makeData(), children: snippet('content') }
 		});
-		const linkHtml = appNameLink(body);
-		expect(linkHtml).toContain('h-7');
-		expect(linkHtml).toContain('w-7');
+		expect(body).toContain('h-7');
+		expect(body).toContain('w-7');
 	});
 
 	it('preserves the app name link styling and target', () => {
