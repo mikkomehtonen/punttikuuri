@@ -17,6 +17,7 @@ declare global {
 			locale: 'en' | 'fi';
 			theme: 'light' | 'dark' | 'system';
 			logoLinkUrl: string;
+			isAdmin: boolean;
 		}
 		// interface PageState {}
 		// interface Platform {}

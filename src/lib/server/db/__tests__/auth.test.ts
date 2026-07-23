@@ -10,7 +10,9 @@ import {
 	getSessionUser,
 	deleteSession,
 	validateUsername,
-	validatePassword
+	validatePassword,
+	listAllUsers,
+	resetUserPassword
 } from '../../auth';
 import { createTestDb, destroyTestDb } from './test-utils';
 
@@ -228,6 +230,163 @@ describe('deleteSession', () => {
 		deleteSession(regResult.sessionToken, db);
 		const user = getSessionUser(regResult.sessionToken, db);
 		expect(user).toBeNull();
+	});
+});
+
+describe('listAllUsers', () => {
+	beforeEach(() => {
+		cleanTables();
+	});
+
+	it('returns all users with id, username, and created_at', () => {
+		registerUser({ username: 'user_one', password: 'password123' }, db);
+		registerUser({ username: 'user_two', password: 'password456' }, db);
+
+		const users = listAllUsers(db);
+
+		expect(users).toHaveLength(2);
+		expect(users.map((u) => u.username)).toContain('user_one');
+		expect(users.map((u) => u.username)).toContain('user_two');
+		for (const u of users) {
+			expect(typeof u.id).toBe('number');
+			expect(typeof u.username).toBe('string');
+			expect(typeof u.created_at).toBe('string');
+		}
+	});
+
+	it('does not return password_hash, locale, or theme', () => {
+		registerUser({ username: 'secret_user', password: 'password123' }, db);
+
+		const users = listAllUsers(db);
+		expect(users).toHaveLength(1);
+		const entry = users[0];
+		expect(entry).not.toHaveProperty('password_hash');
+		expect(entry).not.toHaveProperty('locale');
+		expect(entry).not.toHaveProperty('theme');
+	});
+
+	it('returns empty array when no users exist', () => {
+		const users = listAllUsers(db);
+		expect(users).toHaveLength(0);
+	});
+});
+
+describe('resetUserPassword', () => {
+	beforeEach(() => {
+		cleanTables();
+	});
+
+	it('returns ok true and user can login with new password', () => {
+		registerUser({ username: 'reset_user', password: 'oldpassword123' }, db);
+
+		const result = resetUserPassword({ username: 'reset_user', newPassword: 'newpassword123' }, db);
+		expect(result.ok).toBe(true);
+
+		const loginResult = loginUser({ username: 'reset_user', password: 'newpassword123' }, db);
+		expect(loginResult.ok).toBe(true);
+	});
+
+	it('old password fails after reset', () => {
+		registerUser({ username: 'old_pw_user', password: 'oldpassword123' }, db);
+
+		const result = resetUserPassword(
+			{ username: 'old_pw_user', newPassword: 'newpassword123' },
+			db
+		);
+		expect(result.ok).toBe(true);
+
+		const loginResult = loginUser({ username: 'old_pw_user', password: 'oldpassword123' }, db);
+		expect(loginResult.ok).toBe(false);
+	});
+
+	it('invalidates all sessions for target user when no preserveSessionToken', () => {
+		const regResult = registerUser({ username: 'session_reset', password: 'oldpassword123' }, db);
+		expect(regResult.ok).toBe(true);
+		if (!regResult.ok) return;
+
+		const oldToken = regResult.sessionToken;
+
+		resetUserPassword({ username: 'session_reset', newPassword: 'newpassword123' }, db);
+
+		const user = getSessionUser(oldToken, db);
+		expect(user).toBeNull();
+	});
+
+	it('preserves the specified session when preserveSessionToken is provided', () => {
+		const regResult = registerUser(
+			{ username: 'preserve_session', password: 'oldpassword123' },
+			db
+		);
+		expect(regResult.ok).toBe(true);
+		if (!regResult.ok) return;
+
+		const oldToken = regResult.sessionToken;
+
+		resetUserPassword(
+			{
+				username: 'preserve_session',
+				newPassword: 'newpassword123',
+				preserveSessionToken: oldToken
+			},
+			db
+		);
+
+		const user = getSessionUser(oldToken, db);
+		expect(user).not.toBeNull();
+		expect(user?.username).toBe('preserve_session');
+	});
+
+	it('preserves admin session when resetting another user', () => {
+		const adminResult = registerUser({ username: 'admin', password: 'adminpassword123' }, db);
+		expect(adminResult.ok).toBe(true);
+		if (!adminResult.ok) return;
+
+		const userResult = registerUser({ username: 'regular', password: 'userpassword123' }, db);
+		expect(userResult.ok).toBe(true);
+		if (!userResult.ok) return;
+
+		const adminToken = adminResult.sessionToken;
+		const userToken = userResult.sessionToken;
+
+		resetUserPassword(
+			{ username: 'regular', newPassword: 'newpassword123', preserveSessionToken: adminToken },
+			db
+		);
+
+		// Admin session should still be valid
+		const adminUser = getSessionUser(adminToken, db);
+		expect(adminUser).not.toBeNull();
+		expect(adminUser?.username).toBe('admin');
+
+		// Regular user session should be invalidated
+		const regularUser = getSessionUser(userToken, db);
+		expect(regularUser).toBeNull();
+	});
+
+	it('returns error for short password', () => {
+		const result = resetUserPassword({ username: 'anyuser', newPassword: '1234567' }, db);
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error).toBe('Password must be at least 8 characters');
+			expect(result.field).toBe('password');
+		}
+	});
+
+	it('returns error for password too long', () => {
+		const result = resetUserPassword({ username: 'anyuser', newPassword: 'a'.repeat(73) }, db);
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.field).toBe('password');
+		}
+	});
+
+	it('returns error for nonexistent username', () => {
+		const result = resetUserPassword({ username: 'nonexistent', newPassword: 'validpassword' }, db);
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
+			expect(result.error).toBe('User not found');
+			expect(result.field).toBe('username');
+		}
 	});
 });
 

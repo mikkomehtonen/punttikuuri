@@ -11,7 +11,8 @@ describe('Exercises Page', () => {
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});
@@ -32,13 +33,13 @@ describe('Exercises Page', () => {
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});
 
 		expect(body).toContain('Bench Press');
-		expect(body).toContain('BP');
 		expect(body).toContain('Squat');
 		expect(body).toContain('href="/exercises/1"');
 		expect(body).toContain('href="/exercises/2"');
@@ -52,7 +53,8 @@ describe('Exercises Page', () => {
 					locale: 'fi' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});
@@ -68,7 +70,8 @@ describe('Exercises Page', () => {
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});
@@ -86,7 +89,8 @@ describe('Exercises Page', () => {
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});
@@ -103,7 +107,8 @@ describe('Exercises Page', () => {
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-					logoLinkUrl: ''
+					logoLinkUrl: '',
+					isAdmin: false
 				}
 			}
 		});

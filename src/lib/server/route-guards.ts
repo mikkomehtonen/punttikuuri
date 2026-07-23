@@ -1,4 +1,4 @@
-const protectedRoutes = ['/exercises', '/settings'] as const;
+const protectedRoutes = ['/exercises', '/settings', '/admin'] as const;
 const authRoutes = ['/login', '/register'] as const;
 
 export function isProtectedRoute(pathname: string): boolean {

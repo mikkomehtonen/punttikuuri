@@ -86,6 +86,14 @@ describe('Task 2 - Authentication redirect protection (via hooks.server.ts)', ()
 		expect(isProtectedRoute('/settings')).toBe(true);
 	});
 
+	it('should identify /admin as a protected route', () => {
+		expect(isProtectedRoute('/admin')).toBe(true);
+	});
+
+	it('should identify /admin/ as a protected route', () => {
+		expect(isProtectedRoute('/admin/')).toBe(true);
+	});
+
 	it('should not identify / as a protected route', () => {
 		expect(isProtectedRoute('/')).toBe(false);
 	});
@@ -108,6 +116,10 @@ describe('Task 2 - Authentication redirect protection (via hooks.server.ts)', ()
 
 	it('should not identify /settings as an auth route', () => {
 		expect(isAuthRoute('/settings')).toBe(false);
+	});
+
+	it('should not identify /admin as an auth route', () => {
+		expect(isAuthRoute('/admin')).toBe(false);
 	});
 
 	it('should not identify / as an auth route', () => {

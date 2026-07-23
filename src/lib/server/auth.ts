@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { db as defaultDb } from './db';
@@ -254,6 +254,69 @@ export function deleteSession(
 ): void {
 	const sessionHash = hashToken(sessionToken);
 	dbArg.delete(session).where(eq(session.id, sessionHash)).run();
+}
+
+export interface UserInfo {
+	id: number;
+	username: string;
+	created_at: string;
+}
+
+export function listAllUsers(dbArg: BetterSQLite3Database<typeof schema> = defaultDb): UserInfo[] {
+	return dbArg
+		.select({ id: user.id, username: user.username, created_at: user.created_at })
+		.from(user)
+		.all();
+}
+
+export interface ResetInput {
+	username: string;
+	newPassword: string;
+	preserveSessionToken?: string;
+}
+
+export interface ResetResult {
+	ok: true;
+}
+
+export interface ResetError {
+	ok: false;
+	error: string;
+	field?: 'password' | 'username';
+}
+
+export type ResetOutcome = ResetResult | ResetError;
+
+export function resetUserPassword(
+	input: ResetInput,
+	dbArg: BetterSQLite3Database<typeof schema> = defaultDb
+): ResetOutcome {
+	const passwordError = validatePassword(input.newPassword);
+	if (passwordError) {
+		return { ok: false, error: passwordError, field: 'password' };
+	}
+
+	const existing = dbArg.select().from(user).where(eq(user.username, input.username)).get();
+
+	if (!existing) {
+		return { ok: false, error: 'User not found', field: 'username' };
+	}
+
+	const passwordHash = bcrypt.hashSync(input.newPassword, SALT_ROUNDS);
+	dbArg.update(user).set({ password_hash: passwordHash }).where(eq(user.id, existing.id)).run();
+
+	const preserveHash = input.preserveSessionToken ? hashToken(input.preserveSessionToken) : null;
+
+	if (preserveHash) {
+		dbArg
+			.delete(session)
+			.where(and(eq(session.user_id, existing.id), ne(session.id, preserveHash)))
+			.run();
+	} else {
+		dbArg.delete(session).where(eq(session.user_id, existing.id)).run();
+	}
+
+	return { ok: true };
 }
 
 const COOKIE_BASE = {

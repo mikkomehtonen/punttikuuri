@@ -69,6 +69,14 @@
 					>
 						{t('nav.settings', locale)}
 					</a>
+					{#if data.isAdmin}
+						<a
+							href="/admin"
+							class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-stone-600 hover:text-primary-600 dark:text-stone-300 dark:hover:text-primary-400"
+						>
+							{t('nav.admin', locale)}
+						</a>
+					{/if}
 					<form method="POST" action="/logout">
 						<Button variant="ghost" type="submit">
 							{t('nav.logout', locale)}

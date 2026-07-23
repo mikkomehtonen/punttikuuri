@@ -54,5 +54,12 @@
 	"settings.fi": "Suomi",
 	"settings.saved": "Asetukset tallennettu",
 	"errors.required": "Tämä kenttä on pakollinen",
-	"errors.invalid": "Virheellinen arvo"
+	"errors.invalid": "Virheellinen arvo",
+	"nav.admin": "Ylläpito",
+	"admin.title": "Ylläpito",
+	"admin.users": "Käyttäjät",
+	"admin.selectUser": "Valitse käyttäjä",
+	"admin.newPassword": "Uusi salasana",
+	"admin.resetPassword": "Nollaa salasana",
+	"admin.resetSuccess": "Salasana nollattu käyttäjälle"
 }

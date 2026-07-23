@@ -1,11 +1,13 @@
 import type { LayoutServerLoad } from './$types';
 import { env } from '$env/dynamic/public';
+import { isAdminUsername } from '$lib/server/admin';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	return {
 		user: locals.user,
 		locale: locals.locale,
 		theme: locals.theme,
-		logoLinkUrl: env.PUBLIC_LOGO_LINK_URL ?? ''
+		logoLinkUrl: env.PUBLIC_LOGO_LINK_URL ?? '',
+		isAdmin: locals.user ? isAdminUsername(locals.user.username) : false
 	};
 };

@@ -54,5 +54,12 @@
 	"settings.fi": "Suomi",
 	"settings.saved": "Settings saved",
 	"errors.required": "This field is required",
-	"errors.invalid": "Invalid value"
+	"errors.invalid": "Invalid value",
+	"nav.admin": "Admin",
+	"admin.title": "Admin",
+	"admin.users": "Users",
+	"admin.selectUser": "Select user",
+	"admin.newPassword": "New password",
+	"admin.resetPassword": "Reset password",
+	"admin.resetSuccess": "Password reset for"
 }

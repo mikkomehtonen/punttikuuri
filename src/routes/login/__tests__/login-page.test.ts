@@ -8,6 +8,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		theme: 'system' as const,
 		user: null,
 		logoLinkUrl: '',
+		isAdmin: false,
 		...overrides
 	};
 }

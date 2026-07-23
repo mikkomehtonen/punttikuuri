@@ -18,6 +18,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Favicon HTTP Access** — Favicon SVG served at `/favicon.svg` for external service dashboards, moved from Vite-inlined asset to SvelteKit static directory ([story](stories/009-serve-favicon-svg/story.md))
 - **Header Logo** — Dumbbell logo (`favicon.svg`) displayed to the left of the "Punttikuuri" title in the header, sharing the single source of truth with the favicon and PWA manifest ([story](stories/010-add-logo-to-title/story.md))
 - **Logo Link** — Header logo is a separate link whose target is read from the `LOGO_LINK_URL` environment variable; when unset, the logo renders as a plain decorative image ([story](stories/011-logo-link-env/story.md))
+- **Admin Password Reset** — Admin users (configured via the `ADMIN_USERNAMES` env var) can list all users and reset any user's password from an admin page; resetting a password invalidates all of that user's sessions except the acting admin's current session ([story](stories/012-password-reset/story.md))
 
 ## Non-Goals
 
@@ -28,12 +29,12 @@ A mobile-first gym workout logging application for quickly recording sets during
 - Exercise categories or workout notes
 - Offline-first synchronization
 - Shared household or family features
-- Password reset or email verification
-- Admin interface for user management
+- Email-based password reset or email verification (password reset is admin-driven via the admin page)
+- User deletion or creation from the admin interface (admin page only supports password reset)
 
 ## Known Limitations
 
 - No way to correct mistakes in entered data — users cannot edit or delete exercises, workout sessions, or sets.
 - Weight is displayed and entered in kilograms only.
-- Authentication uses simple username/password without email or password recovery.
+- Authentication uses simple username/password without email; password recovery is admin-driven via the admin page.
 - PWA offline support is limited to static asset caching; workout data requires a network connection.

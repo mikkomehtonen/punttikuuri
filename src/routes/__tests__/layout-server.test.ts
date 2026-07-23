@@ -4,9 +4,19 @@ const { mockEnv } = vi.hoisted(() => ({
 	mockEnv: {} as Record<string, string | undefined>
 }));
 
+const { mockEnvPrivate } = vi.hoisted(() => ({
+	mockEnvPrivate: {} as Record<string, string | undefined>
+}));
+
 vi.mock('$env/dynamic/public', () => ({
 	get env() {
 		return mockEnv;
+	}
+}));
+
+vi.mock('$env/dynamic/private', () => ({
+	get env() {
+		return mockEnvPrivate;
 	}
 }));
 
@@ -19,6 +29,7 @@ function mockEvent(locals: { user: unknown; locale: string; theme: string }) {
 describe('+layout.server load', () => {
 	beforeEach(() => {
 		mockEnv.PUBLIC_LOGO_LINK_URL = undefined;
+		mockEnvPrivate.ADMIN_USERNAMES = undefined;
 	});
 
 	it.each([
@@ -67,5 +78,55 @@ describe('+layout.server load', () => {
 		expect(result.locale).toBe('fi');
 		expect(result.theme).toBe('dark');
 		expect(result.logoLinkUrl).toBe('https://example.com');
+	});
+
+	it('returns isAdmin true when user is in ADMIN_USERNAMES', async () => {
+		mockEnvPrivate.ADMIN_USERNAMES = 'admin';
+		const user = { id: 1, username: 'admin', locale: 'en' as const, theme: 'system' as const };
+		const result = await load(
+			mockEvent({
+				user,
+				locale: 'en',
+				theme: 'system'
+			})
+		);
+		expect(result.isAdmin).toBe(true);
+	});
+
+	it('returns isAdmin false when user is not in ADMIN_USERNAMES', async () => {
+		mockEnvPrivate.ADMIN_USERNAMES = 'admin';
+		const user = { id: 1, username: 'wife', locale: 'en' as const, theme: 'system' as const };
+		const result = await load(
+			mockEvent({
+				user,
+				locale: 'en',
+				theme: 'system'
+			})
+		);
+		expect(result.isAdmin).toBe(false);
+	});
+
+	it('returns isAdmin false when user is null', async () => {
+		mockEnvPrivate.ADMIN_USERNAMES = 'admin';
+		const result = await load(
+			mockEvent({
+				user: null,
+				locale: 'en',
+				theme: 'system'
+			})
+		);
+		expect(result.isAdmin).toBe(false);
+	});
+
+	it('returns isAdmin false when ADMIN_USERNAMES is unset', async () => {
+		const user = { id: 1, username: 'admin', locale: 'en' as const, theme: 'system' as const };
+		const result = await load(
+			mockEvent({
+				user,
+				locale: 'en',
+				theme: 'system'
+			})
+		);
+		expect(result.isAdmin).toBe(false);
 	});
 });

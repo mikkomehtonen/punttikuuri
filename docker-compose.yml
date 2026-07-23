@@ -8,3 +8,4 @@ services:
     restart: unless-stopped
     environment:
       - PUBLIC_LOGO_LINK_URL=${LOGO_LINK_URL}
+      - ADMIN_USERNAMES=${ADMIN_USERNAMES}

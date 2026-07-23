@@ -15,6 +15,7 @@ function makeData(overrides: Record<string, unknown> = {}) {
 		theme: 'system' as const,
 		user: null as { id: number; username: string; locale: 'en'; theme: 'system' } | null,
 		logoLinkUrl: '',
+		isAdmin: false,
 		...overrides
 	};
 }
@@ -271,6 +272,62 @@ describe('Header logo', () => {
 		expect(linkHtml).toContain('text-primary-600');
 		expect(linkHtml).toContain('dark:text-primary-400');
 		expect(linkHtml).toContain('href="/exercises"');
+	});
+});
+
+describe('Admin nav link', () => {
+	it('renders admin link when isAdmin is true', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({
+					user: { id: 1, username: 'test', locale: 'en', theme: 'system' },
+					isAdmin: true
+				}),
+				children: snippet('content')
+			}
+		});
+		expect(body).toContain('href="/admin"');
+		expect(body).toContain('Admin');
+	});
+
+	it('does not render admin link when isAdmin is false', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({
+					user: { id: 1, username: 'test', locale: 'en', theme: 'system' },
+					isAdmin: false
+				}),
+				children: snippet('content')
+			}
+		});
+		expect(body).not.toContain('href="/admin"');
+	});
+
+	it('does not render admin link when user is null', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({
+					user: null,
+					isAdmin: false
+				}),
+				children: snippet('content')
+			}
+		});
+		expect(body).not.toContain('href="/admin"');
+	});
+
+	it('renders Finnish admin link text when locale is fi', () => {
+		const { body } = render(Layout, {
+			props: {
+				data: makeData({
+					user: { id: 1, username: 'test', locale: 'fi', theme: 'system' },
+					isAdmin: true,
+					locale: 'fi'
+				}),
+				children: snippet('content')
+			}
+		});
+		expect(body).toContain('Ylläpito');
 	});
 });
 

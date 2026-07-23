@@ -45,6 +45,36 @@ npm run check         # typecheck
 npm run lint          # prettier + eslint
 ```
 
+## Admin Panel
+
+Designate admin users via the `ADMIN_USERNAMES` environment variable (comma-separated list of usernames). Admins can access `/admin` to list all registered users and reset passwords without requiring email or account access.
+
+```sh
+ADMIN_USERNAMES="admin,bob" npm run dev
+```
+
+When an admin resets a password, their own session is preserved while all other sessions for the target user are invalidated.
+
+## Admin Panel
+
+Designate admin users via the `ADMIN_USERNAMES` environment variable (comma-separated list of usernames). Admins can access `/admin` to list all registered users and reset passwords without requiring email or account access.
+
+```sh
+ADMIN_USERNAMES="admin,bob" npm run dev
+```
+
+When an admin resets a password, their own session is preserved while all other sessions for the target user are invalidated.
+
+## Admin Panel
+
+Designate admin users via the `ADMIN_USERNAMES` environment variable (comma-separated list of usernames). Admins can access `/admin` to list all registered users and reset passwords without requiring email or account access.
+
+```sh
+ADMIN_USERNAMES="admin,bob" npm run dev
+```
+
+When an admin resets a password, their own session is preserved while all other sessions for the target user are invalidated.
+
 ## Production (Docker)
 
 Build and run the production container:
