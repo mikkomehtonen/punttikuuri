@@ -1,10 +1,11 @@
-import { redirect, fail } from '@sveltejs/kit';
-import { eq, desc, asc, and, sql } from 'drizzle-orm';
+import { redirect, fail, type ActionFailure } from '@sveltejs/kit';
+import { eq, desc, asc, and, sql, count } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
-import { validateWeight, validateReps } from '$lib/server/workout-validation';
+import { validateWeight, validateReps, validateComment } from '$lib/server/workout-validation';
 import { logSet } from '$lib/server/workout-service';
+import { t } from '$lib/i18n';
 import { deriveLastSet } from './utils';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -56,6 +57,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.select({
 			sessionId: workoutSession.id,
 			workout_date: workoutSession.workout_date,
+			comment: workoutSession.comment,
 			set_number: setEntry.set_number,
 			weight_kg: setEntry.weight_kg,
 			repetitions: setEntry.repetitions
@@ -76,6 +78,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		number,
 		{
 			workout_date: string;
+			comment: string | null;
 			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
 		}
 	>();
@@ -84,6 +87,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		if (!sessionMap.has(sessionId)) {
 			sessionMap.set(sessionId, {
 				workout_date: row.workout_date,
+				comment: row.comment,
 				sets: []
 			});
 		}
@@ -107,32 +111,50 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			short_name: exercise.short_name
 		},
 		todaySets,
+		todayComment: todaySession?.comment ?? null,
 		previousSessions,
 		lastSet
 	};
 };
 
+type OwnedExerciseResult =
+	| { exerciseId: number; userId: number }
+	| { failure: ActionFailure<{ error: string }> };
+
+function getOwnedExerciseId(
+	locals: { user: { id: number } | null },
+	params: { id: string }
+): OwnedExerciseResult {
+	if (!locals.user) {
+		throw redirect(303, '/login');
+	}
+
+	const exerciseId = parseInt(params.id, 10);
+	if (isNaN(exerciseId) || exerciseId <= 0) {
+		return { failure: fail(400, { error: 'Invalid exercise ID' }) };
+	}
+
+	// Verify the exercise exists and belongs to the current user
+	const exercise = db
+		.select({ id: exerciseType.id })
+		.from(exerciseType)
+		.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user.id)))
+		.get();
+
+	if (!exercise) {
+		return { failure: fail(404, { error: 'Exercise not found' }) };
+	}
+
+	return { exerciseId, userId: locals.user.id };
+}
+
 export const actions: Actions = {
 	default: async ({ request, params, locals }) => {
-		if (!locals.user) {
-			throw redirect(303, '/login');
+		const owned = getOwnedExerciseId(locals, params);
+		if ('failure' in owned) {
+			return owned.failure;
 		}
-
-		const exerciseId = parseInt(params.id, 10);
-		if (isNaN(exerciseId) || exerciseId <= 0) {
-			return fail(400, { error: 'Invalid exercise ID' });
-		}
-
-		// Verify the exercise exists and belongs to the current user
-		const exercise = db
-			.select({ id: exerciseType.id })
-			.from(exerciseType)
-			.where(and(eq(exerciseType.id, exerciseId), eq(exerciseType.user_id, locals.user.id)))
-			.get();
-
-		if (!exercise) {
-			return fail(404, { error: 'Exercise not found' });
-		}
+		const { exerciseId, userId } = owned;
 
 		const formData = await request.formData();
 		const weightKgStr = String(formData.get('weight_kg') ?? '');
@@ -151,7 +173,58 @@ export const actions: Actions = {
 		const weightKg = Number(weightKgStr);
 		const repetitions = Number(repetitionsStr);
 
-		logSet(db, locals.user.id, exerciseId, weightKg, repetitions);
+		logSet(db, userId, exerciseId, weightKg, repetitions);
+
+		throw redirect(303, `/exercises/${exerciseId}`);
+	},
+
+	saveComment: async ({ request, params, locals }) => {
+		const owned = getOwnedExerciseId(locals, params);
+		if ('failure' in owned) {
+			return owned.failure;
+		}
+		const { exerciseId, userId } = owned;
+
+		const today = new Date().toISOString().slice(0, 10);
+
+		const session = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(
+					eq(workoutSession.exercise_type_id, exerciseId),
+					eq(workoutSession.workout_date, today),
+					eq(workoutSession.user_id, userId)
+				)
+			)
+			.get();
+
+		if (!session) {
+			return fail(400, { error: t('workout.noSetsForComment', locals.locale) });
+		}
+
+		const setCount = db
+			.select({ count: count() })
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, session.id))
+			.get();
+
+		if (!setCount || setCount.count === 0) {
+			return fail(400, { error: t('workout.noSetsForComment', locals.locale) });
+		}
+
+		const formData = await request.formData();
+		const comment = String(formData.get('comment') ?? '');
+
+		const commentError = validateComment(comment);
+		if (commentError) {
+			return fail(400, { error: commentError });
+		}
+
+		db.update(workoutSession)
+			.set({ comment: comment.trim() })
+			.where(eq(workoutSession.id, session.id))
+			.run();
 
 		throw redirect(303, `/exercises/${exerciseId}`);
 	}

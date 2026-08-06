@@ -40,6 +40,7 @@ export const workoutSession = sqliteTable(
 			.notNull()
 			.references(() => exerciseType.id, { onDelete: 'cascade' }),
 		workout_date: text('workout_date').notNull(),
+		comment: text('comment'),
 		created_at: text('created_at').notNull()
 	},
 	(table) => [unique().on(table.user_id, table.exercise_type_id, table.workout_date)]

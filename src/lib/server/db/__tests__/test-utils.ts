@@ -6,12 +6,21 @@ import * as schema from '../schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 function loadMigrationSql(): string {
-	const migrationFile = path.resolve('drizzle/0000_wealthy_shockwave.sql');
-	const raw = fs.readFileSync(migrationFile, 'utf-8');
-	return raw
-		.split('--> statement-breakpoint')
-		.map((s) => s.trim())
-		.filter((s) => s.length > 0)
+	const migrationsDir = path.resolve('drizzle');
+	const migrationFiles = fs
+		.readdirSync(migrationsDir)
+		.filter((f) => f.endsWith('.sql'))
+		.sort();
+
+	return migrationFiles
+		.map((file) => {
+			const raw = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+			return raw
+				.split('--> statement-breakpoint')
+				.map((s) => s.trim())
+				.filter((s) => s.length > 0)
+				.join(';\n');
+		})
 		.join(';\n');
 }
 

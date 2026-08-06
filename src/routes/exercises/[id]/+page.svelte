@@ -4,6 +4,7 @@
 	import type { PageData } from './$types';
 	import Button from '$lib/components/Button.svelte';
 	import Input from '$lib/components/Input.svelte';
+	import Textarea from '$lib/components/Textarea.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Alert from '$lib/components/Alert.svelte';
 
@@ -12,10 +13,12 @@
 	const locale = $derived(data.locale as Locale);
 	const exercise = $derived(data.exercise);
 	const todaySets = $derived(data.todaySets ?? []);
+	const todayComment = $derived(data.todayComment ?? null);
 	const previousSessions = $derived(data.previousSessions ?? []);
 
 	let weight = $state(data.lastSet ? String(data.lastSet.weight_kg) : '');
 	let reps = $state(data.lastSet ? String(data.lastSet.repetitions) : '');
+	let comment = $state(data.todayComment ?? '');
 </script>
 
 <svelte:head>
@@ -88,6 +91,27 @@
 				</li>
 			{/each}
 		</ul>
+
+		{#if todayComment}
+			<Card>
+				<p class="text-sm text-stone-700 dark:text-stone-300">{todayComment}</p>
+			</Card>
+		{/if}
+
+		<Card>
+			<form method="POST" action="?/saveComment" class="flex flex-col gap-4">
+				<Textarea
+					label={t('workout.comment', locale)}
+					name="comment"
+					bind:value={comment}
+					maxlength={500}
+					placeholder={t('workout.commentPlaceholder', locale)}
+				/>
+				<Button variant="secondary" type="submit">
+					{t('workout.saveComment', locale)}
+				</Button>
+			</form>
+		</Card>
 	{/if}
 </section>
 
@@ -98,6 +122,9 @@
 			{#each previousSessions as session (session.workout_date)}
 				<div>
 					<h3 class="mb-2 text-sm font-medium text-stone-500">{session.workout_date}</h3>
+					{#if session.comment}
+						<p class="mb-2 text-sm text-stone-700 dark:text-stone-300">{session.comment}</p>
+					{/if}
 					<ul class="flex flex-col gap-1">
 						{#each session.sets as set (set.set_number)}
 							<li>

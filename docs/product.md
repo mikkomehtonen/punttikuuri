@@ -19,14 +19,14 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Header Logo** — Dumbbell logo (`favicon.svg`) displayed to the left of the "Punttikuuri" title in the header, sharing the single source of truth with the favicon and PWA manifest ([story](stories/010-add-logo-to-title/story.md))
 - **Logo Link** — Header logo is a separate link whose target is read from the `LOGO_LINK_URL` environment variable; when unset, the logo renders as a plain decorative image ([story](stories/011-logo-link-env/story.md))
 - **Admin Password Reset** — Admin users (configured via the `ADMIN_USERNAMES` env var) can list all users and reset any user's password from an admin page; resetting a password invalidates all of that user's sessions except the acting admin's current session ([story](stories/012-password-reset/story.md))
+- **Session Comments** — Add an editable free-text comment (up to 500 characters) to today's workout session to record how it felt or whether it went well; comments are displayed in the workout history alongside past sessions ([story](stories/013-add-session-comments/story.md))
 
 ## Non-Goals
 
-- Editing or deleting exercises, sessions, or sets (create-only MVP)
+- Editing or deleting exercises, sessions, or sets — core workout data is create-only (session comments are the exception: they are editable, see Session Comments feature)
 - Pounds unit support (kilograms only)
 - Copying previous workouts as templates
 - Personal records, volume calculations, or progress charts
-- Exercise categories or workout notes
 - Offline-first synchronization
 - Shared household or family features
 - Email-based password reset or email verification (password reset is admin-driven via the admin page)
@@ -34,7 +34,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 
 ## Known Limitations
 
-- No way to correct mistakes in entered data — users cannot edit or delete exercises, workout sessions, or sets.
+- No way to correct mistakes in entered data — users cannot edit or delete exercises, workout sessions, or sets (session comments are the only editable field).
 - Weight is displayed and entered in kilograms only.
 - Authentication uses simple username/password without email; password recovery is admin-driven via the admin page.
 - PWA offline support is limited to static asset caching; workout data requires a network connection.

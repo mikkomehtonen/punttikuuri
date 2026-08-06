@@ -31,3 +31,11 @@ export function validateShortName(shortName: string | null): string | null {
 	}
 	return null;
 }
+
+export function validateComment(comment: string): string | null {
+	const trimmed = comment.trim();
+	if (trimmed.length > 500) {
+		return 'Comment must be at most 500 characters';
+	}
+	return null;
+}

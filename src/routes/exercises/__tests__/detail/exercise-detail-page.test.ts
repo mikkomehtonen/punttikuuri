@@ -6,8 +6,10 @@ function makeData(overrides: Record<string, unknown> = {}) {
 	return {
 		exercise: { id: 1, name: 'Bench Press', short_name: null },
 		todaySets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
+		todayComment: null as string | null,
 		previousSessions: [] as Array<{
 			workout_date: string;
+			comment: string | null;
 			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
 		}>,
 		lastSet: null as { weight_kg: number; repetitions: number } | null,
@@ -69,6 +71,7 @@ describe('Exercise Detail Page', () => {
 					previousSessions: [
 						{
 							workout_date: '2025-06-01',
+							comment: null,
 							sets: [
 								{ set_number: 1, weight_kg: 130, repetitions: 5 },
 								{ set_number: 2, weight_kg: 130, repetitions: 5 }
@@ -76,6 +79,7 @@ describe('Exercise Detail Page', () => {
 						},
 						{
 							workout_date: '2025-05-25',
+							comment: null,
 							sets: [{ set_number: 1, weight_kg: 120, repetitions: 8 }]
 						}
 					]
@@ -109,6 +113,7 @@ describe('Exercise Detail Page', () => {
 					previousSessions: [
 						{
 							workout_date: '2025-06-01',
+							comment: null,
 							sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 						}
 					]
@@ -236,6 +241,122 @@ describe('Exercise Detail Page', () => {
 
 			expect(body).not.toContain('value="100"');
 			expect(body).not.toContain('value="5"');
+		});
+	});
+
+	describe('session comments', () => {
+		it('should display today comment and prefill textarea when todayComment is set', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
+						todayComment: 'Felt strong'
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('Felt strong');
+			expect(body).toContain('action="?/saveComment"');
+			expect(body).toContain('Save Comment');
+			expect(body).toContain('<textarea');
+			expect(body).toContain('name="comment"');
+		});
+
+		it('should render empty textarea and no comment card when todayComment is null', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
+						todayComment: null
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('action="?/saveComment"');
+			expect(body).toContain('How did it feel?');
+			expect(body).not.toContain('Felt strong');
+		});
+
+		it('should not render comment form when todaySets is empty', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({ todaySets: [], todayComment: 'Felt strong' }),
+					form: null
+				}
+			});
+
+			expect(body).not.toContain('action="?/saveComment"');
+			expect(body).not.toContain('Save Comment');
+			expect(body).not.toContain('Felt strong');
+		});
+
+		it('should display comment within a previous session history block', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						previousSessions: [
+							{
+								workout_date: '2025-06-01',
+								comment: 'Felt heavy',
+								sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+							}
+						]
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('Felt heavy');
+		});
+
+		it('should not render comment text for a previous session with null comment', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						previousSessions: [
+							{
+								workout_date: '2025-06-01',
+								comment: null,
+								sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+							}
+						]
+					}),
+					form: null
+				}
+			});
+
+			expect(body).not.toContain('Felt heavy');
+		});
+
+		it('should render saveComment error inside an Alert with border-red-400', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+					}),
+					form: { error: 'Comment must be at most 500 characters' }
+				}
+			});
+
+			expect(body).toContain('Comment must be at most 500 characters');
+			expect(body).toContain('border-red-400');
+		});
+
+		it('should show Finnish comment translations when locale is fi', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						locale: 'fi',
+						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('Tallenna kommentti');
+			expect(body).toContain('Kommentti');
 		});
 	});
 });

@@ -7,7 +7,8 @@ import {
 	validateWeight,
 	validateReps,
 	validateExerciseName,
-	validateShortName
+	validateShortName,
+	validateComment
 } from '../workout-validation';
 import { pwaManifest } from '../../pwa-manifest';
 import {
@@ -592,6 +593,32 @@ describe('Task 3 - Short name validation', () => {
 
 	it('should accept short name at exactly 30 characters', () => {
 		expect(validateShortName('a'.repeat(30))).toBeNull();
+	});
+});
+
+describe('Task 2 - Comment validation', () => {
+	it('should accept a valid comment', () => {
+		expect(validateComment('Felt strong today')).toBeNull();
+	});
+
+	it('should accept an empty comment', () => {
+		expect(validateComment('')).toBeNull();
+	});
+
+	it('should accept a whitespace-only comment', () => {
+		expect(validateComment('   ')).toBeNull();
+	});
+
+	it('should accept a comment of exactly 500 characters', () => {
+		expect(validateComment('a'.repeat(500))).toBeNull();
+	});
+
+	it('should reject a comment over 500 characters', () => {
+		expect(validateComment('a'.repeat(501))).not.toBeNull();
+	});
+
+	it('should accept a comment that trims to exactly 500 characters', () => {
+		expect(validateComment('a'.repeat(500) + ' ')).toBeNull();
 	});
 });
 

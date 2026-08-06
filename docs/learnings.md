@@ -80,3 +80,21 @@
 **Takeaway**: For UI/presentation changes, rely on the relevant unit tests (e.g. `src/routes/__tests__/layout.test.ts`) and treat the full-suite DB/HTTP/audit failures as environment issues unless the story touches those areas.
 
 ---
+
+## Test DB helper must apply all Drizzle migrations
+
+**Date**: 2026-08-06
+**Area**: testing | database | migrations
+**What happened**: Adding a `comment` column to `workout_session` (new migration `0001`) broke existing `exercise.test.ts` DB tests with `table workout_session has no column named comment`, because `createTestDb` in `src/lib/server/db/__tests__/test-utils.ts` only loaded migration `0000`.
+**Takeaway**: `test-utils.ts` now loads every `*.sql` file in `drizzle/` (sorted). When adding a new migration, existing DB tests pick it up automatically; if a DB test fails with "no column named X", the test DB is not applying the latest migration.
+
+---
+
+## Type SvelteKit action failures with `ActionFailure<{ error: string }>`
+
+**Date**: 2026-08-06
+**Area**: TypeScript | SvelteKit
+**What happened**: A shared helper returning `ReturnType<typeof fail>` caused `Property 'error' does not exist on type '{}'` on the page's `form?.error`, because `ReturnType<typeof fail>` resolves to a generic `ActionFailure` that loses the `{ error: string }` data shape.
+**Takeaway**: When a helper returns a SvelteKit action failure, type it as `ActionFailure<{ error: string }>` (imported from `@sveltejs/kit`) rather than `ReturnType<typeof fail>`, so the page's `ActionData` keeps the `error` field.
+
+---

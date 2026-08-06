@@ -3,6 +3,7 @@ import { render } from 'svelte/server';
 import { createRawSnippet } from 'svelte';
 import Button from '../Button.svelte';
 import Input from '../Input.svelte';
+import Textarea from '../Textarea.svelte';
 import Card from '../Card.svelte';
 import Alert from '../Alert.svelte';
 import Badge from '../Badge.svelte';
@@ -60,6 +61,33 @@ describe('Input', () => {
 			props: { label: 'Name', name: 'name', error: 'Required field' }
 		});
 		expect(body).toContain('Required field');
+		expect(body).toContain('text-red-600');
+	});
+});
+
+describe('Textarea', () => {
+	it('renders label and textarea with name and value', () => {
+		const { body } = render(Textarea, {
+			props: { label: 'Comment', name: 'comment', value: 'Felt strong' }
+		});
+		expect(body).toContain('Comment');
+		expect(body).toContain('<textarea');
+		expect(body).toContain('name="comment"');
+		expect(body).toContain('Felt strong');
+	});
+
+	it('renders maxlength attribute on textarea', () => {
+		const { body } = render(Textarea, {
+			props: { label: 'Comment', name: 'comment', maxlength: 500 }
+		});
+		expect(body).toContain('maxlength="500"');
+	});
+
+	it('renders error message when error prop is set', () => {
+		const { body } = render(Textarea, {
+			props: { label: 'Comment', name: 'comment', error: 'Too long' }
+		});
+		expect(body).toContain('Too long');
 		expect(body).toContain('text-red-600');
 	});
 });
