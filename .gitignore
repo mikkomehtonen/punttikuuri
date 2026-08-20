@@ -27,3 +27,6 @@ data/*.db-journal
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Graphify
+graphify-out/
