@@ -6,8 +6,8 @@ description: >
   Input: path to a story directory.
   Output: completion report with reviewer SHA verdicts.
 mode: all
-temperature: 0.2
-model: accounts/fireworks/models/deepseek-v4-flash-0731
+temperature: 0.5
+model: kolibri/dirk-qwen3.8-27b
 tools:
   question: false
   task: true

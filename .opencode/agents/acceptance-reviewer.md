@@ -7,7 +7,7 @@ description: >
   Output: Pass or Fail verdict. Passes only when lint and tests pass and all ACs have automated test coverage.
 mode: subagent
 temperature: 0
-model: fireworks-ai/accounts/fireworks/models/qwen3p7-plus
+model: kolibri/muse-glimmer
 variant: low
 tools:
   edit: false

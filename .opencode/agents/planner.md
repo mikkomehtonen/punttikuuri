@@ -6,8 +6,8 @@ description: >
   Input: feature description or bug report.
   Output: committed story file with acceptance criteria and implementation approach.
 mode: all
-temperature: 0.2
-model: fireworks-ai/accounts/fireworks/models/glm-5p2
+temperature: 0.4
+model: kolibri/muse-glimmer
 tools:
   task: true
   grep: false
