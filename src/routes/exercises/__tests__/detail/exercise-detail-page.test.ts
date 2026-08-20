@@ -5,8 +5,11 @@ import ExerciseDetailPage from '../../[id]/+page.svelte';
 function makeData(overrides: Record<string, unknown> = {}) {
 	return {
 		exercise: { id: 1, name: 'Bench Press', short_name: null },
-		todaySets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
-		todayComment: null as string | null,
+		today: new Date().toISOString().slice(0, 10),
+		selectedDate: new Date().toISOString().slice(0, 10),
+		isToday: true,
+		selectedDateSets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
+		selectedDateComment: null as string | null,
 		previousSessions: [] as Array<{
 			workout_date: string;
 			comment: string | null;
@@ -63,7 +66,7 @@ describe('Exercise Detail Page', () => {
 		const { body } = render(ExerciseDetailPage, {
 			props: {
 				data: makeData({
-					todaySets: [
+					selectedDateSets: [
 						{ set_number: 1, weight_kg: 80, repetitions: 10 },
 						{ set_number: 2, weight_kg: 100, repetitions: 5 },
 						{ set_number: 3, weight_kg: 120, repetitions: 3 }
@@ -111,7 +114,7 @@ describe('Exercise Detail Page', () => {
 		const { body } = render(ExerciseDetailPage, {
 			props: {
 				data: makeData({
-					todaySets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+					selectedDateSets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 				}),
 				form: null
 			}
@@ -185,7 +188,7 @@ describe('Exercise Detail Page', () => {
 		const { body } = render(ExerciseDetailPage, {
 			props: {
 				data: makeData({
-					todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+					selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
 				}),
 				form: null
 			}
@@ -259,12 +262,12 @@ describe('Exercise Detail Page', () => {
 	});
 
 	describe('session comments', () => {
-		it('should display today comment and prefill textarea when todayComment is set', () => {
+		it('should display today comment and prefill textarea when selectedDateComment is set', () => {
 			const { body } = render(ExerciseDetailPage, {
 				props: {
 					data: makeData({
-						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
-						todayComment: 'Felt strong'
+						selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
+						selectedDateComment: 'Felt strong'
 					}),
 					form: null
 				}
@@ -277,12 +280,12 @@ describe('Exercise Detail Page', () => {
 			expect(body).toContain('name="comment"');
 		});
 
-		it('should render empty textarea and no comment card when todayComment is null', () => {
+		it('should render empty textarea and no comment card when selectedDateComment is null', () => {
 			const { body } = render(ExerciseDetailPage, {
 				props: {
 					data: makeData({
-						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
-						todayComment: null
+						selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }],
+						selectedDateComment: null
 					}),
 					form: null
 				}
@@ -293,10 +296,10 @@ describe('Exercise Detail Page', () => {
 			expect(body).not.toContain('Felt strong');
 		});
 
-		it('should not render comment form when todaySets is empty', () => {
+		it('should not render comment form when selectedDateSets is empty', () => {
 			const { body } = render(ExerciseDetailPage, {
 				props: {
-					data: makeData({ todaySets: [], todayComment: 'Felt strong' }),
+					data: makeData({ selectedDateSets: [], selectedDateComment: 'Felt strong' }),
 					form: null
 				}
 			});
@@ -348,7 +351,7 @@ describe('Exercise Detail Page', () => {
 			const { body } = render(ExerciseDetailPage, {
 				props: {
 					data: makeData({
-						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+						selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
 					}),
 					form: { error: 'Comment must be at most 500 characters' }
 				}
@@ -363,7 +366,7 @@ describe('Exercise Detail Page', () => {
 				props: {
 					data: makeData({
 						locale: 'fi',
-						todaySets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+						selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
 					}),
 					form: null
 				}
@@ -371,6 +374,77 @@ describe('Exercise Detail Page', () => {
 
 			expect(body).toContain('Tallenna kommentti');
 			expect(body).toContain('Kommentti');
+		});
+	});
+
+	describe('date selection', () => {
+		it('renders a date input with name, type, max and value', () => {
+			const data = makeData();
+			const { body } = render(ExerciseDetailPage, {
+				props: { data, form: null }
+			});
+
+			expect(body).toContain('name="date"');
+			expect(body).toContain('type="date"');
+			expect(body).toContain(`max="${data.today}"`);
+			expect(body).toContain(`value="${data.selectedDate}"`);
+		});
+
+		it('shows the selected date in the heading when it is not today', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData({
+						selectedDate: '2025-08-19',
+						isToday: false
+					}),
+					form: null
+				}
+			});
+
+			expect(body).toContain('2025-08-19');
+			expect(body).not.toContain('>Today<');
+		});
+
+		it('includes a hidden workout_date field in both the logSet and saveComment forms', () => {
+			const data = makeData({
+				selectedDateSets: [{ set_number: 1, weight_kg: 80, repetitions: 10 }]
+			});
+			const { body } = render(ExerciseDetailPage, {
+				props: { data, form: null }
+			});
+
+			const hiddenCount = body.split('name="workout_date"').length - 1;
+			expect(hiddenCount).toBe(2);
+			expect(body).toContain('type="hidden"');
+		});
+
+		it('includes a single hidden workout_date field when there are no sets', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: { data: makeData(), form: null }
+			});
+
+			const hiddenCount = body.split('name="workout_date"').length - 1;
+			expect(hiddenCount).toBe(1);
+		});
+
+		it('shows the Finnish date label when locale is fi', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: { data: makeData({ locale: 'fi' }), form: null }
+			});
+
+			expect(body).toContain('Päivämäärä');
+		});
+
+		it('shows a date error inside an Alert with border-red-400', () => {
+			const { body } = render(ExerciseDetailPage, {
+				props: {
+					data: makeData(),
+					form: { error: "Date must be a valid past or today's date" }
+				}
+			});
+
+			expect(body).toContain("Date must be a valid past or today's date");
+			expect(body).toContain('border-red-400');
 		});
 	});
 });

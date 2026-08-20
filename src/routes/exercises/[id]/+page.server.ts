@@ -3,12 +3,17 @@ import { eq, desc, asc, and, sql, count } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
-import { validateWeight, validateReps, validateComment } from '$lib/server/workout-validation';
+import {
+	validateWeight,
+	validateReps,
+	validateComment,
+	validateWorkoutDate
+} from '$lib/server/workout-validation';
 import { logSet } from '$lib/server/workout-service';
 import { t } from '$lib/i18n';
 import { deriveLastSet } from './utils';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const exerciseId = parseInt(params.id, 10);
 	if (isNaN(exerciseId) || exerciseId <= 0) {
 		throw redirect(302, '/exercises');
@@ -25,30 +30,36 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const today = new Date().toISOString().slice(0, 10);
+	const dateParam = url.searchParams.get('date');
+	const selectedDate =
+		dateParam !== null && validateWorkoutDate(dateParam, locals.locale) === null
+			? dateParam
+			: today;
+	const isToday = selectedDate === today;
 
-	const todaySession = db
+	const selectedDateSession = db
 		.select()
 		.from(workoutSession)
 		.where(
 			and(
 				eq(workoutSession.exercise_type_id, exercise.id),
-				eq(workoutSession.workout_date, today),
+				eq(workoutSession.workout_date, selectedDate),
 				eq(workoutSession.user_id, locals.user!.id)
 			)
 		)
 		.get();
 
-	let todaySets: Array<{ set_number: number; weight_kg: number; repetitions: number }> = [];
+	let selectedDateSets: Array<{ set_number: number; weight_kg: number; repetitions: number }> = [];
 
-	if (todaySession) {
-		todaySets = db
+	if (selectedDateSession) {
+		selectedDateSets = db
 			.select({
 				set_number: setEntry.set_number,
 				weight_kg: setEntry.weight_kg,
 				repetitions: setEntry.repetitions
 			})
 			.from(setEntry)
-			.where(eq(setEntry.workout_session_id, todaySession.id))
+			.where(eq(setEntry.workout_session_id, selectedDateSession.id))
 			.orderBy(asc(setEntry.set_number))
 			.all();
 	}
@@ -68,7 +79,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			and(
 				eq(workoutSession.exercise_type_id, exercise.id),
 				eq(workoutSession.user_id, locals.user!.id),
-				sql`${workoutSession.workout_date} != ${today}`
+				sql`${workoutSession.workout_date} != ${selectedDate}`
 			)
 		)
 		.orderBy(desc(workoutSession.workout_date), asc(setEntry.set_number))
@@ -102,7 +113,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const previousSessions = Array.from(sessionMap.values());
 
-	const lastSet = deriveLastSet(todaySets, previousSessions);
+	const lastSet = deriveLastSet(selectedDateSets, previousSessions);
 
 	return {
 		exercise: {
@@ -110,8 +121,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			name: exercise.name,
 			short_name: exercise.short_name
 		},
-		todaySets,
-		todayComment: todaySession?.comment ?? null,
+		today,
+		selectedDate,
+		isToday,
+		selectedDateSets,
+		selectedDateComment: selectedDateSession?.comment ?? null,
 		previousSessions,
 		lastSet
 	};
@@ -159,6 +173,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const weightKgStr = String(formData.get('weight_kg') ?? '');
 		const repetitionsStr = String(formData.get('repetitions') ?? '');
+		const workoutDateStr = String(formData.get('workout_date') ?? '');
 
 		const weightError = validateWeight(weightKgStr);
 		if (weightError) {
@@ -170,10 +185,17 @@ export const actions: Actions = {
 			return fail(400, { error: repsError });
 		}
 
+		const workoutDate =
+			workoutDateStr === '' ? new Date().toISOString().slice(0, 10) : workoutDateStr;
+		const dateError = validateWorkoutDate(workoutDate, locals.locale);
+		if (dateError) {
+			return fail(400, { error: dateError });
+		}
+
 		const weightKg = Number(weightKgStr);
 		const repetitions = Number(repetitionsStr);
 
-		logSet(db, userId, exerciseId, weightKg, repetitions);
+		logSet(db, userId, exerciseId, workoutDate, weightKg, repetitions);
 
 		throw redirect(303, `/exercises/${exerciseId}`);
 	},
@@ -185,7 +207,15 @@ export const actions: Actions = {
 		}
 		const { exerciseId, userId } = owned;
 
-		const today = new Date().toISOString().slice(0, 10);
+		const formData = await request.formData();
+		const workoutDateStr = String(formData.get('workout_date') ?? '');
+		const workoutDate =
+			workoutDateStr === '' ? new Date().toISOString().slice(0, 10) : workoutDateStr;
+
+		const dateError = validateWorkoutDate(workoutDate, locals.locale);
+		if (dateError) {
+			return fail(400, { error: dateError });
+		}
 
 		const session = db
 			.select()
@@ -193,7 +223,7 @@ export const actions: Actions = {
 			.where(
 				and(
 					eq(workoutSession.exercise_type_id, exerciseId),
-					eq(workoutSession.workout_date, today),
+					eq(workoutSession.workout_date, workoutDate),
 					eq(workoutSession.user_id, userId)
 				)
 			)
@@ -213,7 +243,6 @@ export const actions: Actions = {
 			return fail(400, { error: t('workout.noSetsForComment', locals.locale) });
 		}
 
-		const formData = await request.formData();
 		const comment = String(formData.get('comment') ?? '');
 
 		const commentError = validateComment(comment);

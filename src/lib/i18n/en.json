@@ -37,6 +37,8 @@
 	"workout.reps": "Reps",
 	"workout.submit": "Log Set",
 	"workout.today": "Today",
+	"workout.date": "Date",
+	"workout.dateError": "Date must be a valid past or today's date",
 	"workout.history": "Previous Workouts",
 	"workout.noHistory": "No previous workouts",
 	"workout.noWorkout": "No workout logged for this exercise yet",

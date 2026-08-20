@@ -1,3 +1,26 @@
+import { t, type Locale } from '$lib/i18n';
+
+export function validateWorkoutDate(dateStr: string, locale: Locale = 'en'): string | null {
+	const error = t('workout.dateError', locale);
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+		return error;
+	}
+	const [year, month, day] = dateStr.split('-').map(Number);
+	const date = new Date(Date.UTC(year, month - 1, day));
+	if (
+		date.getUTCFullYear() !== year ||
+		date.getUTCMonth() !== month - 1 ||
+		date.getUTCDate() !== day
+	) {
+		return error;
+	}
+	const today = new Date().toISOString().slice(0, 10);
+	if (dateStr > today) {
+		return error;
+	}
+	return null;
+}
+
 export function validateWeight(weightStr: string): string | null {
 	const weightKg = Number(weightStr);
 	if (!weightStr || isNaN(weightKg) || !isFinite(weightKg) || weightKg <= 0) {

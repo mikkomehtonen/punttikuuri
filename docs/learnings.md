@@ -107,3 +107,30 @@
 **Takeaway**: If a third exercise-detail server test file is needed, extract the shared harness (db setup, user seeding, `mockEvent`) into one helper module and import it from all three files instead of copying a third time.
 
 ---
+
+## Client-side behavior tests must use `.svelte.test.ts` (jsdom project)
+
+**Date**: 2026-08-20
+**Area**: testing | Svelte | vitest
+**What happened**: To test that a `$effect` re-syncs form fields when `data` changes, the SSR test approach (`svelte/server` render, server project) could not be used — `$effect` does not run during SSR. The vitest config lives in `vite.config.ts` (there is no `vitest.config.ts`) and splits by filename: the `server` project (node) runs `src/**/*.test.ts` excluding `*.svelte.test.ts`; the `browser` project (jsdom) runs only `src/**/*.svelte.test.ts`.
+**Takeaway**: For client-side reactivity (effects, prop-change behavior), name the test `*.svelte.test.ts` so it lands in the jsdom project, and use `@testing-library/svelte` `render`/`rerender` (see `layout.svelte.test.ts`). `await rerender(...)` flushes `$effect` and the state updates it triggers, so DOM assertions immediately after work.
+
+---
+
+## No auto-cleanup in jsdom component tests — scope queries to the container
+
+**Date**: 2026-08-20
+**Area**: testing | jsdom
+**What happened**: A first version of `exercise-detail-page.svelte.test.ts` used global `document.querySelector`; components from earlier tests remained in `document.body` (auto-cleanup did not fire in this setup), so later tests asserted against stale elements from previous tests (e.g. expected `'80'`, received `'90'` from a prior test's rerendered component).
+**Takeaway**: In `*.svelte.test.ts` files, scope all queries to the `container` returned by `render` (`container.querySelector(...)`) and clear `document.body.innerHTML` in `afterEach` (or call `unmount()`). Never rely on global `document` queries or on auto-cleanup.
+
+---
+
+## Reviewer lint gate is repo-wide `prettier --check .` (includes `stories/*.md`)
+
+**Date**: 2026-08-20
+**Area**: workflow | linting
+**What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered.
+**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` included — and `prettier --write` the offenders. Prettier's markdown reformatting can mangle inline code spans containing backticks; review the diff after `--write`.
+
+---

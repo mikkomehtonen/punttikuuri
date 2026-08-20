@@ -393,8 +393,8 @@ describe('Workout Logging', () => {
 	it('logSet should auto-create session and insert set with sequential numbering', () => {
 		const today = new Date().toISOString().slice(0, 10);
 
-		logSet(db, userIdA, exerciseId, 100, 5);
-		logSet(db, userIdA, exerciseId, 102.5, 3);
+		logSet(db, userIdA, exerciseId, today, 100, 5);
+		logSet(db, userIdA, exerciseId, today, 102.5, 3);
 
 		const sessions = db
 			.select()
@@ -419,6 +419,144 @@ describe('Workout Logging', () => {
 		expect(sets[1].set_number).toBe(2);
 		expect(sets[1].weight_kg).toBe(102.5);
 		expect(sets[1].repetitions).toBe(3);
+	});
+
+	it('logSet should create a session for a past date without affecting today', () => {
+		const today = new Date().toISOString().slice(0, 10);
+		const pastDate = '2025-08-19';
+
+		logSet(db, userIdA, exerciseId, pastDate, 100, 5);
+
+		const sessions = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(eq(workoutSession.user_id, userIdA), eq(workoutSession.exercise_type_id, exerciseId))
+			)
+			.all();
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0].workout_date).toBe(pastDate);
+		expect(sessions.some((s) => s.workout_date === today)).toBe(false);
+
+		const sets = db
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, sessions[0].id))
+			.all();
+		expect(sets).toHaveLength(1);
+		expect(sets[0].set_number).toBe(1);
+		expect(sets[0].weight_kg).toBe(100);
+		expect(sets[0].repetitions).toBe(5);
+	});
+
+	it('logSet should reuse an existing session for the same date and number sets sequentially', () => {
+		const pastDate = '2025-08-19';
+
+		logSet(db, userIdA, exerciseId, pastDate, 100, 5);
+		logSet(db, userIdA, exerciseId, pastDate, 102.5, 3);
+
+		const sessions = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(eq(workoutSession.user_id, userIdA), eq(workoutSession.exercise_type_id, exerciseId))
+			)
+			.all();
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0].workout_date).toBe(pastDate);
+
+		const sets = db
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, sessions[0].id))
+			.orderBy(asc(setEntry.set_number))
+			.all();
+		expect(sets).toHaveLength(2);
+		expect(sets[0].set_number).toBe(1);
+		expect(sets[0].weight_kg).toBe(100);
+		expect(sets[1].set_number).toBe(2);
+		expect(sets[1].weight_kg).toBe(102.5);
+	});
+
+	it('logSet should reuse a concurrently-created session on a UNIQUE constraint violation', () => {
+		const today = new Date().toISOString().slice(0, 10);
+
+		// Simulate a concurrent insert that wins the race: the raw insert
+		// succeeds (creating the session row), then the drizzle insert is
+		// made to fail with SQLITE_CONSTRAINT_UNIQUE. The service must catch
+		// the violation, re-select the now-existing session, and attach the
+		// set to it instead of creating a duplicate.
+		const rawInsert = sqlite.prepare(
+			'INSERT INTO workout_session (user_id, exercise_type_id, workout_date, created_at) VALUES (?, ?, ?, ?)'
+		);
+
+		const wrappedDb = new Proxy(db, {
+			get(target, prop) {
+				if (prop === 'transaction') {
+					return (fn: (tx: unknown) => void) =>
+						(target as { transaction: (f: (tx: unknown) => unknown) => unknown }).transaction(
+							(tx: unknown) => {
+								const wrappedTx = new Proxy(tx, {
+									get(txTarget: any, txProp: string) {
+										if (txProp === 'insert') {
+											return (table: unknown) => {
+												const builder = txTarget.insert(table);
+												if (table === workoutSession) {
+													rawInsert.run(userIdA, exerciseId, today, new Date().toISOString());
+													return {
+														values: () => ({
+															returning: () => ({
+																get: () => {
+																	const err = new Error(
+																		'UNIQUE constraint failed: workout_session.user_id'
+																	);
+																	(err as unknown as { code: string }).code =
+																		'SQLITE_CONSTRAINT_UNIQUE';
+																	throw err;
+																}
+															})
+														})
+													};
+												}
+												return builder;
+											};
+										}
+										const value = txTarget[txProp];
+										return typeof value === 'function' ? value.bind(txTarget) : value;
+									}
+								});
+								return fn(wrappedTx);
+							}
+						);
+				}
+				const value = (target as unknown as Record<string, unknown>)[prop as string];
+				return typeof value === 'function'
+					? (value as (...a: unknown[]) => unknown).bind(target)
+					: value;
+			}
+		});
+
+		logSet(wrappedDb as never, userIdA, exerciseId, today, 100, 5);
+
+		const sessions = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(eq(workoutSession.user_id, userIdA), eq(workoutSession.exercise_type_id, exerciseId))
+			)
+			.all();
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0].workout_date).toBe(today);
+
+		const sets = db
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, sessions[0].id))
+			.all();
+		expect(sets).toHaveLength(1);
+		expect(sets[0].set_number).toBe(1);
+		expect(sets[0].weight_kg).toBe(100);
+		expect(sets[0].repetitions).toBe(5);
 	});
 });
 

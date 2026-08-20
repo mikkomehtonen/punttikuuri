@@ -8,7 +8,8 @@ import {
 	validateReps,
 	validateExerciseName,
 	validateShortName,
-	validateComment
+	validateComment,
+	validateWorkoutDate
 } from '../workout-validation';
 import { pwaManifest } from '../../pwa-manifest';
 import {
@@ -184,6 +185,50 @@ describe('Task 4 - Workout validation (imported from production code)', () => {
 
 	it('should reject -Infinity weight', () => {
 		expect(validateWeight('-Infinity')).not.toBeNull();
+	});
+});
+
+describe('Story 015 - Workout date validation', () => {
+	const today = new Date().toISOString().slice(0, 10);
+	const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+	const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+
+	it('should accept today as a valid date', () => {
+		expect(validateWorkoutDate(today)).toBeNull();
+	});
+
+	it('should accept a past date', () => {
+		expect(validateWorkoutDate('2025-08-19')).toBeNull();
+	});
+
+	it('should accept yesterday as a valid date', () => {
+		expect(validateWorkoutDate(yesterday)).toBeNull();
+	});
+
+	it('should reject an empty string', () => {
+		expect(validateWorkoutDate('')).not.toBeNull();
+	});
+
+	it('should reject non-ISO date formats', () => {
+		expect(validateWorkoutDate('2025/08/20')).not.toBeNull();
+		expect(validateWorkoutDate('20-08-2025')).not.toBeNull();
+		expect(validateWorkoutDate('2025-8-20')).not.toBeNull();
+	});
+
+	it('should reject an invalid calendar date', () => {
+		expect(validateWorkoutDate('2025-02-30')).not.toBeNull();
+	});
+
+	it('should reject a future date', () => {
+		expect(validateWorkoutDate(tomorrow)).not.toBeNull();
+		expect(validateWorkoutDate('2099-01-01')).not.toBeNull();
+	});
+
+	it('should return the translated error message', () => {
+		expect(validateWorkoutDate('bad')).toBe("Date must be a valid past or today's date");
+		expect(validateWorkoutDate('bad', 'fi')).toBe(
+			'Päivämäärän tulee olla voimassa oleva menneisyyden tai nykyinen päivä'
+		);
 	});
 });
 

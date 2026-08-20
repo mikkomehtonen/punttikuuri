@@ -178,4 +178,112 @@ describe('logSet action', () => {
 		expect(result).toHaveProperty('status', 404);
 		expect(result).toHaveProperty('data.error', 'Exercise not found');
 	});
+
+	it('inserts a set for a valid past workout_date and redirects', async () => {
+		const pastDate = '2025-08-19';
+		let caught: unknown = null;
+		try {
+			await page.actions.logSet(
+				mockEvent({
+					request: {
+						formData: async () => {
+							const fd = new FormData();
+							fd.set('weight_kg', '80');
+							fd.set('repetitions', '10');
+							fd.set('workout_date', pastDate);
+							return fd;
+						}
+					}
+				})
+			);
+		} catch (err) {
+			caught = err;
+		}
+
+		expect(caught).toHaveProperty('status', 303);
+		expect(caught).toHaveProperty('location', `/exercises/${exerciseId}`);
+
+		const session = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(
+					eq(workoutSession.exercise_type_id, exerciseId),
+					eq(workoutSession.workout_date, pastDate)
+				)
+			)
+			.get();
+		expect(session).toBeDefined();
+
+		const sets = db
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, session!.id))
+			.all();
+		expect(sets).toHaveLength(1);
+		expect(sets[0].set_number).toBe(1);
+		expect(sets[0].weight_kg).toBe(80);
+		expect(sets[0].repetitions).toBe(10);
+	});
+
+	it('fails with a date error for a future workout_date and inserts nothing', async () => {
+		const result = await page.actions.logSet(
+			mockEvent({
+				request: {
+					formData: async () => {
+						const fd = new FormData();
+						fd.set('weight_kg', '80');
+						fd.set('repetitions', '10');
+						fd.set('workout_date', '2099-01-01');
+						return fd;
+					}
+				}
+			})
+		);
+
+		expect(result).toHaveProperty('status', 400);
+		expect(result?.data.error).toBe("Date must be a valid past or today's date");
+		expect(countSetEntries()).toBe(0);
+		expect(db.select().from(workoutSession).all()).toHaveLength(0);
+	});
+
+	it('fails with a date error for an invalid calendar date', async () => {
+		const result = await page.actions.logSet(
+			mockEvent({
+				request: {
+					formData: async () => {
+						const fd = new FormData();
+						fd.set('weight_kg', '80');
+						fd.set('repetitions', '10');
+						fd.set('workout_date', '2025-02-30');
+						return fd;
+					}
+				}
+			})
+		);
+
+		expect(result).toHaveProperty('status', 400);
+		expect(result?.data.error).toBe("Date must be a valid past or today's date");
+		expect(countSetEntries()).toBe(0);
+	});
+
+	it('validates weight before date so an invalid weight with a past date reports the weight error', async () => {
+		const result = await page.actions.logSet(
+			mockEvent({
+				request: {
+					formData: async () => {
+						const fd = new FormData();
+						fd.set('weight_kg', '0');
+						fd.set('repetitions', '10');
+						fd.set('workout_date', '2025-08-19');
+						return fd;
+					}
+				}
+			})
+		);
+
+		expect(result).toHaveProperty('status', 400);
+		expect(result?.data.error).toBe('Weight must be a positive number');
+		expect(countSetEntries()).toBe(0);
+	});
 });

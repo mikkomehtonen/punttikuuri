@@ -63,6 +63,15 @@ describe('Input', () => {
 		expect(body).toContain('Required field');
 		expect(body).toContain('text-red-600');
 	});
+
+	it('renders a date input with type, max and value', () => {
+		const { body } = render(Input, {
+			props: { label: 'Date', name: 'date', type: 'date', max: '2026-08-20', value: '2025-08-19' }
+		});
+		expect(body).toContain('type="date"');
+		expect(body).toContain('max="2026-08-20"');
+		expect(body).toContain('value="2025-08-19"');
+	});
 });
 
 describe('Textarea', () => {

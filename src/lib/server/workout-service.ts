@@ -7,10 +7,10 @@ export function logSet(
 	db: BetterSQLite3Database<typeof schema>,
 	userId: number,
 	exerciseId: number,
+	workoutDate: string,
 	weightKg: number,
 	repetitions: number
 ): void {
-	const today = new Date().toISOString().slice(0, 10);
 	const nowISO = new Date().toISOString();
 
 	db.transaction((tx) => {
@@ -20,7 +20,7 @@ export function logSet(
 			.where(
 				and(
 					eq(workoutSession.exercise_type_id, exerciseId),
-					eq(workoutSession.workout_date, today),
+					eq(workoutSession.workout_date, workoutDate),
 					eq(workoutSession.user_id, userId)
 				)
 			)
@@ -33,7 +33,7 @@ export function logSet(
 					.values({
 						user_id: userId,
 						exercise_type_id: exerciseId,
-						workout_date: today,
+						workout_date: workoutDate,
 						created_at: nowISO
 					})
 					.returning()
@@ -53,7 +53,7 @@ export function logSet(
 					.where(
 						and(
 							eq(workoutSession.exercise_type_id, exerciseId),
-							eq(workoutSession.workout_date, today),
+							eq(workoutSession.workout_date, workoutDate),
 							eq(workoutSession.user_id, userId)
 						)
 					)

@@ -37,6 +37,8 @@
 	"workout.reps": "Toistot",
 	"workout.submit": "Tallenna sarja",
 	"workout.today": "Tänään",
+	"workout.date": "Päivämäärä",
+	"workout.dateError": "Päivämäärän tulee olla voimassa oleva menneisyyden tai nykyinen päivä",
 	"workout.history": "Aiemmat harjoitukset",
 	"workout.noHistory": "Ei aiempia harjoituksia",
 	"workout.noWorkout": "Tälle harjoitukselle ei ole vielä kirjattu sarjoja",

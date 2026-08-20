@@ -70,6 +70,7 @@ function mockEvent(overrides: Record<string, unknown> = {}) {
 			theme: 'system'
 		},
 		params: { id: String(exerciseId) },
+		url: new URL('http://localhost/exercises/1'),
 		request: {
 			formData: async () => {
 				const fd = new FormData();
@@ -256,26 +257,164 @@ describe('saveComment action', () => {
 		expect(result).toHaveProperty('status', 404);
 		expect(result).toHaveProperty('data.error', 'Exercise not found');
 	});
+
+	it('updates the comment for a past-date session when workout_date is provided', async () => {
+		seedSession(userId, exerciseId, '2025-08-19', null, 1);
+
+		let caught: unknown = null;
+		try {
+			await page.actions.saveComment(
+				mockEvent({
+					request: {
+						formData: async () => {
+							const fd = new FormData();
+							fd.set('comment', 'Past comment');
+							fd.set('workout_date', '2025-08-19');
+							return fd;
+						}
+					}
+				})
+			);
+		} catch (err) {
+			caught = err;
+		}
+
+		expect(caught).toHaveProperty('status', 303);
+		expect(caught).toHaveProperty('location', `/exercises/${exerciseId}`);
+
+		const session = db
+			.select()
+			.from(workoutSession)
+			.where(
+				and(
+					eq(workoutSession.exercise_type_id, exerciseId),
+					eq(workoutSession.workout_date, '2025-08-19')
+				)
+			)
+			.get();
+		expect(session?.comment).toBe('Past comment');
+	});
+
+	it('fails with noSetsForComment when no session exists for the selected past date', async () => {
+		const result = await page.actions.saveComment(
+			mockEvent({
+				request: {
+					formData: async () => {
+						const fd = new FormData();
+						fd.set('comment', 'Past comment');
+						fd.set('workout_date', '2025-08-19');
+						return fd;
+					}
+				}
+			})
+		);
+		expect(result).toHaveProperty('status', 400);
+		expect(result).toHaveProperty('data.error', 'Log at least one set before adding a comment');
+	});
+
+	it('fails with a date error for a future workout_date', async () => {
+		const result = await page.actions.saveComment(
+			mockEvent({
+				request: {
+					formData: async () => {
+						const fd = new FormData();
+						fd.set('comment', 'Future comment');
+						fd.set('workout_date', '2099-01-01');
+						return fd;
+					}
+				}
+			})
+		);
+		expect(result).toHaveProperty('status', 400);
+		expect(result?.data.error).toBe("Date must be a valid past or today's date");
+	});
 });
 
 describe('load function comments', () => {
-	it('returns todayComment when today session has a comment', async () => {
+	it('returns selectedDateComment when today session has a comment', async () => {
 		seedSession(userId, exerciseId, today(), 'Great session', 1);
 
 		const result = await page.load(mockEvent());
-		expect((result as { todayComment: string | null }).todayComment).toBe('Great session');
+		expect((result as { selectedDateComment: string | null }).selectedDateComment).toBe(
+			'Great session'
+		);
 	});
 
-	it('returns todayComment null when today session has null comment', async () => {
+	it('returns selectedDateComment null when today session has null comment', async () => {
 		seedSession(userId, exerciseId, today(), null, 1);
 
 		const result = await page.load(mockEvent());
-		expect((result as { todayComment: string | null }).todayComment).toBeNull();
+		expect((result as { selectedDateComment: string | null }).selectedDateComment).toBeNull();
 	});
 
-	it('returns todayComment null when no today session exists', async () => {
+	it('returns selectedDateComment null when no today session exists', async () => {
 		const result = await page.load(mockEvent());
-		expect((result as { todayComment: string | null }).todayComment).toBeNull();
+		expect((result as { selectedDateComment: string | null }).selectedDateComment).toBeNull();
+	});
+
+	it('returns selectedDate and isToday for a valid past ?date= parameter', async () => {
+		seedSession(userId, exerciseId, '2025-08-19', 'Past comment', 1);
+
+		const result = await page.load(
+			mockEvent({ url: new URL('http://localhost/exercises/1?date=2025-08-19') })
+		);
+		const r = result as {
+			selectedDate: string;
+			isToday: boolean;
+			selectedDateSets: Array<{ set_number: number }>;
+			selectedDateComment: string | null;
+		};
+		expect(r.selectedDate).toBe('2025-08-19');
+		expect(r.isToday).toBe(false);
+		expect(r.selectedDateSets).toHaveLength(1);
+		expect(r.selectedDateComment).toBe('Past comment');
+	});
+
+	it('excludes the selected date from previousSessions but keeps other dates', async () => {
+		seedSession(userId, exerciseId, '2025-08-19', 'Selected', 1);
+		seedSession(userId, exerciseId, '2025-06-01', 'Other', 1);
+
+		const result = await page.load(
+			mockEvent({ url: new URL('http://localhost/exercises/1?date=2025-08-19') })
+		);
+		const r = result as { previousSessions: Array<{ workout_date: string }> };
+		const dates = r.previousSessions.map((s) => s.workout_date);
+		expect(dates).not.toContain('2025-08-19');
+		expect(dates).toContain('2025-06-01');
+	});
+
+	it('falls back to today for an invalid ?date= parameter', async () => {
+		const result = await page.load(
+			mockEvent({ url: new URL('http://localhost/exercises/1?date=not-a-date') })
+		);
+		const r = result as { selectedDate: string; isToday: boolean };
+		expect(r.selectedDate).toBe(today());
+		expect(r.isToday).toBe(true);
+	});
+
+	it('falls back to today for a future ?date= parameter', async () => {
+		const result = await page.load(
+			mockEvent({ url: new URL('http://localhost/exercises/1?date=2099-01-01') })
+		);
+		const r = result as { selectedDate: string; isToday: boolean };
+		expect(r.selectedDate).toBe(today());
+		expect(r.isToday).toBe(true);
+	});
+
+	it('returns empty selectedDateSets and null comment when no session exists for the selected date', async () => {
+		seedSession(userId, exerciseId, '2025-06-01', 'Other', 1);
+
+		const result = await page.load(
+			mockEvent({ url: new URL('http://localhost/exercises/1?date=2025-08-19') })
+		);
+		const r = result as {
+			selectedDate: string;
+			selectedDateSets: Array<unknown>;
+			selectedDateComment: string | null;
+		};
+		expect(r.selectedDate).toBe('2025-08-19');
+		expect(r.selectedDateSets).toHaveLength(0);
+		expect(r.selectedDateComment).toBeNull();
 	});
 
 	it('includes comment on a previous session entry', async () => {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
@@ -12,13 +13,29 @@
 
 	const locale = $derived(data.locale as Locale);
 	const exercise = $derived(data.exercise);
-	const todaySets = $derived(data.todaySets ?? []);
-	const todayComment = $derived(data.todayComment ?? null);
+	const today = $derived(data.today);
+	const selectedDate = $derived(data.selectedDate);
+	const isToday = $derived(data.isToday);
+	const selectedDateSets = $derived(data.selectedDateSets ?? []);
+	const selectedDateComment = $derived(data.selectedDateComment ?? null);
 	const previousSessions = $derived(data.previousSessions ?? []);
 
 	let weight = $state(data.lastSet ? String(data.lastSet.weight_kg) : '');
 	let reps = $state(data.lastSet ? String(data.lastSet.repetitions) : '');
-	let comment = $state(data.todayComment ?? '');
+	let comment = $state(data.selectedDateComment ?? '');
+
+	// Client-side date navigation (goto) reuses this component instance without
+	// re-running <script>, so re-sync the form fields whenever data changes.
+	$effect(() => {
+		weight = data.lastSet ? String(data.lastSet.weight_kg) : '';
+		reps = data.lastSet ? String(data.lastSet.repetitions) : '';
+		comment = data.selectedDateComment ?? '';
+	});
+
+	function handleDateChange(event: Event) {
+		const value = (event.target as HTMLInputElement).value;
+		goto(`/exercises/${exercise.id}${value ? `?date=${value}` : ''}`);
+	}
 </script>
 
 <svelte:head>
@@ -34,7 +51,7 @@
 <h1 class="mb-8 text-2xl font-bold">{exercise.name}</h1>
 
 <section class="mb-8">
-	<h2 class="mb-4 text-lg font-semibold">{t('workout.today', locale)}</h2>
+	<h2 class="mb-4 text-lg font-semibold">{isToday ? t('workout.today', locale) : selectedDate}</h2>
 
 	{#if form?.error}
 		<div class="mb-4">
@@ -44,8 +61,20 @@
 		</div>
 	{/if}
 
+	<div class="mb-4">
+		<Input
+			label={t('workout.date', locale)}
+			name="date"
+			type="date"
+			max={today}
+			value={selectedDate}
+			onchange={handleDateChange}
+		/>
+	</div>
+
 	<Card>
 		<form method="POST" action="?/logSet" class="flex flex-col gap-4">
+			<input type="hidden" name="workout_date" value={selectedDate} />
 			<div class="flex gap-4">
 				<div class="flex-1">
 					<Input
@@ -76,9 +105,9 @@
 		</form>
 	</Card>
 
-	{#if todaySets.length > 0}
+	{#if selectedDateSets.length > 0}
 		<ul class="mt-4 flex flex-col gap-2">
-			{#each todaySets as set (set.set_number)}
+			{#each selectedDateSets as set (set.set_number)}
 				<li>
 					<Card>
 						<div class="flex items-center justify-between">
@@ -92,14 +121,15 @@
 			{/each}
 		</ul>
 
-		{#if todayComment}
+		{#if selectedDateComment}
 			<Card>
-				<p class="text-sm text-stone-700 dark:text-stone-300">{todayComment}</p>
+				<p class="text-sm text-stone-700 dark:text-stone-300">{selectedDateComment}</p>
 			</Card>
 		{/if}
 
 		<Card>
 			<form method="POST" action="?/saveComment" class="flex flex-col gap-4">
+				<input type="hidden" name="workout_date" value={selectedDate} />
 				<Textarea
 					label={t('workout.comment', locale)}
 					name="comment"
