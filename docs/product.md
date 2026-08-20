@@ -20,6 +20,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Logo Link** — Header logo is a separate link whose target is read from the `LOGO_LINK_URL` environment variable; when unset, the logo renders as a plain decorative image ([story](stories/011-logo-link-env/story.md))
 - **Admin Password Reset** — Admin users (configured via the `ADMIN_USERNAMES` env var) can list all users and reset any user's password from an admin page; resetting a password invalidates all of that user's sessions except the acting admin's current session ([story](stories/012-password-reset/story.md))
 - **Session Comments** — Add an editable free-text comment (up to 500 characters) to today's workout session to record how it felt or whether it went well; comments are displayed in the workout history alongside past sessions ([story](stories/013-add-session-comments/story.md))
+- **Log Set Form Action Fix** — Renamed the exercise detail page's default form action to a named `logSet` action so it no longer conflicts with the `saveComment` named action, resolving the 500 error on "Log Set" submission ([story](stories/014-fix-log-set-named-action/story.md))
 
 ## Non-Goals
 

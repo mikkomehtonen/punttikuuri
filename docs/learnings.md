@@ -98,3 +98,12 @@
 **Takeaway**: When a helper returns a SvelteKit action failure, type it as `ActionFailure<{ error: string }>` (imported from `@sveltejs/kit`) rather than `ReturnType<typeof fail>`, so the page's `ActionData` keeps the `error` field.
 
 ---
+
+## Exercise detail server-test harness is duplicated
+
+**Date**: 2026-08-20
+**Area**: testing | SvelteKit
+**What happened**: Story 014 added `exercise-detail-logset-server.test.ts` by copying the ~70-line harness (vi.mock of `$lib/server/db`, in-memory sqlite + `migrate`, user seeding, `mockEvent`) from `exercise-detail-comments-server.test.ts`. Code reviewer flagged the duplication as technical debt.
+**Takeaway**: If a third exercise-detail server test file is needed, extract the shared harness (db setup, user seeding, `mockEvent`) into one helper module and import it from all three files instead of copying a third time.
+
+---

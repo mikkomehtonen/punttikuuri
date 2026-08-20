@@ -37,6 +37,20 @@ describe('Exercise Detail Page', () => {
 		expect(body).toContain('Log Set');
 	});
 
+	it('should point the log set form at the named logSet action', () => {
+		const { body } = render(ExerciseDetailPage, {
+			props: { data: makeData(), form: null }
+		});
+
+		expect(body).toContain('action="?/logSet"');
+		// The action attribute must be on the set-logging form element itself,
+		// not a bare method="POST" form that falls back to the default action.
+		expect(body).toMatch(/<form[^>]*action="\?\/logSet"[^>]*>/);
+		expect(body).toContain('name="weight_kg"');
+		expect(body).toContain('name="repetitions"');
+		expect(body).toContain('Log Set');
+	});
+
 	it('should not show history section when no previous workouts exist', () => {
 		const { body } = render(ExerciseDetailPage, {
 			props: { data: makeData(), form: null }

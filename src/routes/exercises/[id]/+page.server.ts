@@ -149,7 +149,7 @@ function getOwnedExerciseId(
 }
 
 export const actions: Actions = {
-	default: async ({ request, params, locals }) => {
+	logSet: async ({ request, params, locals }) => {
 		const owned = getOwnedExerciseId(locals, params);
 		if ('failure' in owned) {
 			return owned.failure;

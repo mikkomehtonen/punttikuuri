@@ -45,7 +45,7 @@
 	{/if}
 
 	<Card>
-		<form method="POST" class="flex flex-col gap-4">
+		<form method="POST" action="?/logSet" class="flex flex-col gap-4">
 			<div class="flex gap-4">
 				<div class="flex-1">
 					<Input
