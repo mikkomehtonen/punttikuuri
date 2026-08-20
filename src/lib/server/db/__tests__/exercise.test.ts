@@ -496,8 +496,12 @@ describe('Workout Logging', () => {
 					return (fn: (tx: unknown) => void) =>
 						(target as { transaction: (f: (tx: unknown) => unknown) => unknown }).transaction(
 							(tx: unknown) => {
-								const wrappedTx = new Proxy(tx, {
-									get(txTarget: any, txProp: string) {
+								interface TxLike {
+									insert: (table: unknown) => unknown;
+									[key: string]: unknown;
+								}
+								const wrappedTx = new Proxy(tx as TxLike, {
+									get(txTarget: TxLike, txProp: string) {
 										if (txProp === 'insert') {
 											return (table: unknown) => {
 												const builder = txTarget.insert(table);

@@ -22,6 +22,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Session Comments** — Add an editable free-text comment (up to 500 characters) to today's workout session to record how it felt or whether it went well; comments are displayed in the workout history alongside past sessions ([story](stories/013-add-session-comments/story.md))
 - **Log Set Form Action Fix** — Renamed the exercise detail page's default form action to a named `logSet` action so it no longer conflicts with the `saveComment` named action, resolving the 500 error on "Log Set" submission ([story](stories/014-fix-log-set-named-action/story.md))
 - **Back-date Exercise Logging** — A date selector on the exercise detail page (defaulting to today) lets users log sets and session comments against any past day via a `?date=YYYY-MM-DD` query parameter; future dates are rejected ([story](stories/015-log-exercise-previous-days/story.md))
+- **Root Redirect** — Authenticated users visiting `/` are redirected to `/exercises` for seamless entry ([story](stories/016-extend-session-duration/story.md))
 
 ## Non-Goals
 

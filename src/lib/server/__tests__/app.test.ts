@@ -675,7 +675,7 @@ describe('Story 005 - npm audit vulnerability fixes', () => {
 		expect(pkg.overrides).toBeDefined();
 		expect(pkg.overrides.cookie).toBe('0.7.2');
 		expect(pkg.overrides.esbuild).toBe('0.25.12');
-		expect(pkg.devDependencies['@sveltejs/kit']).toBe('2.64.0');
+		expect(pkg.devDependencies['@sveltejs/kit']).toBe('^2.70.3');
 	});
 
 	it('should resolve cookie and esbuild to patched versions in lockfile', () => {

@@ -1,12 +1,5 @@
 # Learnings
 
-## Ensure lint compliance for new test files
-
-**Date**: 2026-06-10
-**Area**: testing | linting
-**What happened**: Added new test files (`favicon-absence.test.ts`, `layout-favicon-static.test.ts`, `favicon-http.test.ts`) which initially triggered Prettier and ESLint errors (explicit `any` usage, formatting). The errors blocked acceptance until manually corrected.
-**Takeaway**: After adding any new test or source files, run `npm run format` and `npm run lint` locally before committing. Use proper typings (e.g., `ReturnType<typeof spawn>`) instead of `any` to satisfy `@typescript-eslint/no-explicit-any`.
-
 ---
 
 ## Use dynamic ports for HTTP tests
@@ -26,13 +19,6 @@
 **Takeaway**: For static asset verification, direct file reads can satisfy ACs without needing full server integration, unless the story explicitly demands HTTP checks.
 
 ---
-
-## Keep repository formatting consistent
-
-**Date**: 2026-06-10
-**Area**: workflow | code style
-**What happened**: Initial commits missed Prettier formatting for newly added files, causing lint failures.
-**Takeaway**: Integrate Prettier checks into the development workflow (e.g., pre‑commit hook or CI step) to catch formatting early.
 
 ---
 
@@ -69,15 +55,6 @@
 **Area**: testing | TypeScript | SvelteKit
 **What happened**: Adding `logoLinkUrl: string` to `App.PageData` made it a required field on every page component's `data` prop. Every `makeData()` helper in page tests (landing, login, register, settings, exercises, etc.) had to include `logoLinkUrl: ''`, not just the layout tests.
 **Takeaway**: Before changing `App.PageData`, search for all `makeData` helpers and inline `data:` objects in `*.test.ts` files and update them in the same commit to keep `svelte-check` green.
-
----
-
-## Full test suite has pre-existing environment failures
-
-**Date**: 2026-06-25
-**Area**: testing | environment
-**What happened**: Running `npm run test` failed on unrelated suites: `better-sqlite3` native module version mismatch, `favicon-http.test.ts` requiring a preview server on port 4173, and an `npm audit` vulnerability check. The story-relevant `layout.test.ts` tests passed cleanly.
-**Takeaway**: For UI/presentation changes, rely on the relevant unit tests (e.g. `src/routes/__tests__/layout.test.ts`) and treat the full-suite DB/HTTP/audit failures as environment issues unless the story touches those areas.
 
 ---
 
@@ -132,5 +109,23 @@
 **Area**: workflow | linting
 **What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered.
 **Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` included — and `prettier --write` the offenders. Prettier's markdown reformatting can mangle inline code spans containing backticks; review the diff after `--write`.
+
+---
+
+## `vite preview` binds IPv6 `::1` only; stale processes hold port 4173
+
+**Date**: 2026-08-20
+**Area**: testing | environment
+**What happened**: `favicon-http.test.ts` failed with `ECONNREFUSED 127.0.0.1:4173` for two compounding reasons: (1) `vite preview` bound to IPv6 `::1` only, so fetches to `localhost`/`127.0.0.1` were refused while `http://[::1]:4173` returned 200; (2) earlier runs had left orphaned `vite preview` processes holding port 4173 — `server.kill()` on the npm wrapper does not kill the vite child, and `pkill` is unavailable in this environment.
+**Takeaway**: The test now spawns `npm run preview -- --host 127.0.0.1 --port 4173`, polls for readiness (no fixed sleep), and kills the whole process group (`detached: true` + `process.kill(-pid, 'SIGTERM')`). If port 4173 is busy, find stale PIDs by scanning `/proc/*/cmdline` for `vite preview` and `kill` them individually.
+
+---
+
+## Resumed reviewer subagent sessions can re-emit stale reports
+
+**Date**: 2026-08-20
+**Area**: workflow | reviewers
+**What happened**: Re-running the acceptance reviewer with a reused `task_id` returned a byte-identical copy of the first run's report — citing failures (e.g. a version assertion) that had already been fixed in the code — so the "Fail" verdict did not reflect the current HEAD.
+**Takeaway**: When a reviewer verdict contradicts the verified actual state (run the failing commands yourself first), do not trust the report: re-run the reviewer with a fresh session (no `task_id`) and read the full report via `git show <HASH> --format=%B -s` to confirm it matches the current code before acting on it.
 
 ---
