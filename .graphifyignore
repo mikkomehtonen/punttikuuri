@@ -1,0 +1,40 @@
+# Git metadata
+.git/
+.github/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Tests
+tests/
+test/
+**/test_*.py
+**/*_test.py
+conftest.py
+
+# Build / generated
+build/
+dist/
+coverage/
+htmlcov/
+*.egg-info/
+
+# Dokumentation
+docs/
+
+# Graphifyn
+graphify-output/
+
+# Node
+node_modules/
+
+# Opencode
+.agents
+.opencode
+stories
