@@ -129,3 +129,21 @@
 **Takeaway**: When a reviewer verdict contradicts the verified actual state (run the failing commands yourself first), do not trust the report: re-run the reviewer with a fresh session (no `task_id`) and read the full report via `git show <HASH> --format=%B -s` to confirm it matches the current code before acting on it.
 
 ---
+
+## Svelte components take event handlers as explicit props, not `$$restProps`
+
+**Date**: 2026-08-21
+**Area**: Svelte | components
+**What happened**: Passing `onclick` to `<Button>` (story 017's delete button) failed type-checking — `Button` declares only `variant`/`href`/`type`/`children` and spreads no `$$restProps`. The repo convention (see `Input`'s `onchange`) is to declare each supported DOM event handler as an explicit typed prop and forward it to the inner element.
+**Takeaway**: When a component needs an event handler, add a typed prop (e.g. `onclick?: (event: MouseEvent) => void`) to its `$props()` and forward it with `{onclick}` on the rendered element. Don't assume unknown attributes pass through.
+
+---
+
+## Modal a11y: focus the dialog on open or Escape/backdrop handlers are dead code
+
+**Date**: 2026-08-21
+**Area**: Svelte | accessibility
+**What happened**: Story 017's confirmation modal put `onclick`/`onkeydown` on a fixed overlay `<div>`. Compiler a11y rules require `tabindex` on `role="dialog"` and a keyboard handler alongside click handlers on non-interactive elements. More subtly, the code reviewer flagged that after clicking the trigger, focus stays on the delete button (outside the overlay), so the overlay's Escape handler never fired — it only worked if the user had tabbed into the modal.
+**Takeaway**: For modals in this repo: give the dialog `tabindex="-1"` + `bind:this`, focus it from a `$effect` when it opens, keep `onclick` (backdrop close via `event.target === event.currentTarget`) and `onkeydown` (Escape) on the overlay so events bubble from the focused dialog, and test focus (`vi.waitFor(() => expect(dialog).toHaveFocus())`) plus Escape close.
+
+---

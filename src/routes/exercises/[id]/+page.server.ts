@@ -9,7 +9,7 @@ import {
 	validateComment,
 	validateWorkoutDate
 } from '$lib/server/workout-validation';
-import { logSet } from '$lib/server/workout-service';
+import { logSet, deleteSetEntry } from '$lib/server/workout-service';
 import { t } from '$lib/i18n';
 import { deriveLastSet } from './utils';
 
@@ -37,17 +37,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			: today;
 	const isToday = selectedDate === today;
 
-	const selectedDateSession = db
-		.select()
-		.from(workoutSession)
-		.where(
-			and(
-				eq(workoutSession.exercise_type_id, exercise.id),
-				eq(workoutSession.workout_date, selectedDate),
-				eq(workoutSession.user_id, locals.user!.id)
-			)
-		)
-		.get();
+	const selectedDateSession = findSession(locals.user!.id, exercise.id, selectedDate);
 
 	let selectedDateSets: Array<{ set_number: number; weight_kg: number; repetitions: number }> = [];
 
@@ -162,6 +152,20 @@ function getOwnedExerciseId(
 	return { exerciseId, userId: locals.user.id };
 }
 
+function findSession(userId: number, exerciseId: number, workoutDate: string) {
+	return db
+		.select()
+		.from(workoutSession)
+		.where(
+			and(
+				eq(workoutSession.exercise_type_id, exerciseId),
+				eq(workoutSession.workout_date, workoutDate),
+				eq(workoutSession.user_id, userId)
+			)
+		)
+		.get();
+}
+
 export const actions: Actions = {
 	logSet: async ({ request, params, locals }) => {
 		const owned = getOwnedExerciseId(locals, params);
@@ -217,17 +221,7 @@ export const actions: Actions = {
 			return fail(400, { error: dateError });
 		}
 
-		const session = db
-			.select()
-			.from(workoutSession)
-			.where(
-				and(
-					eq(workoutSession.exercise_type_id, exerciseId),
-					eq(workoutSession.workout_date, workoutDate),
-					eq(workoutSession.user_id, userId)
-				)
-			)
-			.get();
+		const session = findSession(userId, exerciseId, workoutDate);
 
 		if (!session) {
 			return fail(400, { error: t('workout.noSetsForComment', locals.locale) });
@@ -256,5 +250,49 @@ export const actions: Actions = {
 			.run();
 
 		throw redirect(303, `/exercises/${exerciseId}`);
+	},
+
+	deleteSet: async ({ request, params, locals }) => {
+		const owned = getOwnedExerciseId(locals, params);
+		if ('failure' in owned) {
+			return owned.failure;
+		}
+		const { exerciseId, userId } = owned;
+
+		const formData = await request.formData();
+		const workoutDateStr = String(formData.get('workout_date') ?? '');
+		const setNumberStr = String(formData.get('set_number') ?? '');
+
+		const workoutDate =
+			workoutDateStr === '' ? new Date().toISOString().slice(0, 10) : workoutDateStr;
+		const dateError = validateWorkoutDate(workoutDate, locals.locale);
+		if (dateError) {
+			return fail(400, { error: dateError });
+		}
+
+		const setNumber = Number(setNumberStr);
+		if (!Number.isInteger(setNumber) || setNumber <= 0) {
+			return fail(400, { error: t('workout.invalidSetNumber', locals.locale) });
+		}
+
+		const session = findSession(userId, exerciseId, workoutDate);
+
+		if (!session) {
+			return fail(400, { error: t('workout.noSetsForDate', locals.locale) });
+		}
+
+		const entry = db
+			.select({ id: setEntry.id })
+			.from(setEntry)
+			.where(and(eq(setEntry.workout_session_id, session.id), eq(setEntry.set_number, setNumber)))
+			.get();
+
+		if (!entry) {
+			return fail(400, { error: t('workout.invalidSetNumber', locals.locale) });
+		}
+
+		deleteSetEntry(db, session.id, setNumber);
+
+		throw redirect(303, `/exercises/${exerciseId}?date=${workoutDate}`);
 	}
 };

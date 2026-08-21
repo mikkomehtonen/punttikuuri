@@ -8,6 +8,7 @@
 	import Textarea from '$lib/components/Textarea.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Alert from '$lib/components/Alert.svelte';
+	import type { SetSummary } from './utils';
 
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
@@ -35,6 +36,23 @@
 	function handleDateChange(event: Event) {
 		const value = (event.target as HTMLInputElement).value;
 		goto(`/exercises/${exercise.id}${value ? `?date=${value}` : ''}`);
+	}
+
+	let deleteTarget = $state<SetSummary | null>(null);
+	let dialogEl = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		if (deleteTarget) {
+			dialogEl?.focus();
+		}
+	});
+
+	function openDeleteModal(set: SetSummary) {
+		deleteTarget = set;
+	}
+
+	function closeDeleteModal() {
+		deleteTarget = null;
 	}
 </script>
 
@@ -110,11 +128,16 @@
 			{#each selectedDateSets as set (set.set_number)}
 				<li>
 					<Card>
-						<div class="flex items-center justify-between">
+						<div class="flex flex-wrap items-center justify-between gap-2">
 							<span class="text-stone-500 dark:text-stone-400"
 								>{t('workout.set', locale)} {set.set_number}</span
 							>
-							<span class="font-medium">{set.weight_kg} kg &times; {set.repetitions}</span>
+							<div class="flex items-center gap-2">
+								<span class="font-medium">{set.weight_kg} kg &times; {set.repetitions}</span>
+								<Button variant="ghost" onclick={() => openDeleteModal(set)}>
+									{t('workout.delete', locale)}
+								</Button>
+							</div>
 						</div>
 					</Card>
 				</li>
@@ -173,4 +196,44 @@
 			{/each}
 		</div>
 	</section>
+{/if}
+
+{#if deleteTarget}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+		role="presentation"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) closeDeleteModal();
+		}}
+		onkeydown={(event) => {
+			if (event.key === 'Escape') closeDeleteModal();
+		}}
+	>
+		<div
+			class="w-full max-w-sm"
+			role="dialog"
+			aria-modal="true"
+			aria-label={t('workout.deleteConfirm', locale)}
+			tabindex="-1"
+			bind:this={dialogEl}
+		>
+			<Card>
+				<h2 class="mb-2 text-lg font-semibold">{t('workout.deleteConfirm', locale)}</h2>
+				<p class="mb-4 text-sm text-stone-600 dark:text-stone-300">
+					{t('workout.set', locale)}
+					{deleteTarget.set_number}: {deleteTarget.weight_kg} kg &times; {deleteTarget.repetitions}
+				</p>
+				<form method="POST" action="?/deleteSet" class="flex justify-end gap-2">
+					<input type="hidden" name="workout_date" value={selectedDate} />
+					<input type="hidden" name="set_number" value={deleteTarget.set_number} />
+					<Button variant="secondary" type="button" onclick={closeDeleteModal}>
+						{t('workout.cancel', locale)}
+					</Button>
+					<Button variant="primary" type="submit">
+						{t('workout.confirm', locale)}
+					</Button>
+				</form>
+			</Card>
+		</div>
+	</div>
 {/if}

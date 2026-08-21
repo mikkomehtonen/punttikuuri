@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, asc, sql } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { workoutSession, setEntry } from './db/schema';
 import * as schema from './db/schema';
@@ -82,5 +82,31 @@ export function logSet(
 				created_at: nowISO
 			})
 			.run();
+	});
+}
+
+export function deleteSetEntry(
+	db: BetterSQLite3Database<typeof schema>,
+	sessionId: number,
+	setNumber: number
+): void {
+	db.transaction((tx) => {
+		tx.delete(setEntry)
+			.where(and(eq(setEntry.workout_session_id, sessionId), eq(setEntry.set_number, setNumber)))
+			.run();
+
+		const remaining = tx
+			.select()
+			.from(setEntry)
+			.where(eq(setEntry.workout_session_id, sessionId))
+			.orderBy(asc(setEntry.created_at), asc(setEntry.id))
+			.all();
+
+		remaining.forEach((row, index) => {
+			const nextNumber = index + 1;
+			if (row.set_number !== nextNumber) {
+				tx.update(setEntry).set({ set_number: nextNumber }).where(eq(setEntry.id, row.id)).run();
+			}
+		});
 	});
 }

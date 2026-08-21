@@ -5,11 +5,13 @@
 		variant = 'primary',
 		href = undefined,
 		type = 'button',
+		onclick = undefined,
 		children
 	}: {
 		variant?: 'primary' | 'secondary' | 'ghost';
 		href?: string;
 		type?: 'button' | 'submit' | 'reset';
+		onclick?: (event: MouseEvent) => void;
 		children: Snippet;
 	} = $props();
 
@@ -24,11 +26,11 @@
 </script>
 
 {#if href}
-	<a {href} class={variantClasses[variant]}>
+	<a {href} class={variantClasses[variant]} {onclick}>
 		{@render children()}
 	</a>
 {:else}
-	<button {type} class={variantClasses[variant]}>
+	<button {type} class={variantClasses[variant]} {onclick}>
 		{@render children()}
 	</button>
 {/if}
