@@ -9,6 +9,7 @@
 	import Card from '$lib/components/Card.svelte';
 	import Alert from '$lib/components/Alert.svelte';
 	import type { SetSummary } from './utils';
+	import { isOldSession } from './utils';
 
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
@@ -32,6 +33,20 @@
 		reps = data.lastSet ? String(data.lastSet.repetitions) : '';
 		comment = data.selectedDateComment ?? '';
 	});
+
+	// Collapsible history: sessions older than 7 days start collapsed, recent
+	// ones start expanded. The default is derived from the `today` value provided
+	// by load (not the client clock) so SSR and hydration agree; the map only
+	// stores explicit user toggles, keyed by workout_date.
+	let expanded = $state<Record<string, boolean>>({});
+
+	function isExpanded(session: { workout_date: string }): boolean {
+		return expanded[session.workout_date] ?? !isOldSession(session.workout_date, today);
+	}
+
+	function toggleExpanded(session: { workout_date: string }): void {
+		expanded[session.workout_date] = !isExpanded(session);
+	}
 
 	function handleDateChange(event: Event) {
 		const value = (event.target as HTMLInputElement).value;
@@ -234,24 +249,35 @@
 		<div class="flex flex-col gap-6">
 			{#each previousSessions as session (session.workout_date)}
 				<div>
-					<h3 class="mb-2 text-sm font-medium text-stone-500">{session.workout_date}</h3>
-					{#if session.comment}
-						<p class="mb-2 text-sm text-stone-700 dark:text-stone-300">{session.comment}</p>
+					<button
+						type="button"
+						class="mb-2 cursor-pointer rounded text-sm font-medium text-stone-500 transition-colors hover:text-stone-700 focus:ring-2 focus:ring-primary-500 focus:outline-none dark:text-stone-400 dark:hover:text-stone-300"
+						aria-expanded={isExpanded(session) ? 'true' : 'false'}
+						onclick={() => toggleExpanded(session)}
+					>
+						{session.workout_date}
+					</button>
+					{#if isExpanded(session)}
+						{#if session.comment}
+							<p class="mb-2 text-sm text-stone-700 dark:text-stone-300">{session.comment}</p>
+						{/if}
+						{#if session.sets.length > 0}
+							<ul class="flex flex-col gap-1">
+								{#each session.sets as set (set.set_number)}
+									<li>
+										<Card>
+											<div class="flex items-center justify-between">
+												<span class="text-stone-500 dark:text-stone-400"
+													>{t('workout.set', locale)} {set.set_number}</span
+												>
+												<span>{set.weight_kg} kg &times; {set.repetitions}</span>
+											</div>
+										</Card>
+									</li>
+								{/each}
+							</ul>
+						{/if}
 					{/if}
-					<ul class="flex flex-col gap-1">
-						{#each session.sets as set (set.set_number)}
-							<li>
-								<Card>
-									<div class="flex items-center justify-between">
-										<span class="text-stone-500 dark:text-stone-400"
-											>{t('workout.set', locale)} {set.set_number}</span
-										>
-										<span>{set.weight_kg} kg &times; {set.repetitions}</span>
-									</div>
-								</Card>
-							</li>
-						{/each}
-					</ul>
 				</div>
 			{/each}
 		</div>

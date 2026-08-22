@@ -25,6 +25,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Root Redirect** — Authenticated users visiting `/` are redirected to `/exercises` for seamless entry ([story](stories/016-extend-session-duration/story.md))
 - **Set Deletion** — Delete individual sets from the current exercise session with confirmation; sets are renumbered to keep sequential numbering ([story](stories/017-delete-set/story.md))
 - **Set Editing** — Edit weight and repetitions for individual sets in the current exercise session with validation; set numbers remain unchanged ([story](stories/018-edit-set-values/story.md))
+- **Collapsible Old Workouts** — Workout history sessions older than 7 days collapse to date only by default; clicking the date expands to show sets and comment ([story](stories/019-collapse-old-workouts/story.md))
 
 ## Non-Goals
 

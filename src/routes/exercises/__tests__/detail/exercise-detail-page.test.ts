@@ -2,6 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { render } from 'svelte/server';
 import ExerciseDetailPage from '../../[id]/+page.svelte';
 
+// A date N days before the current UTC date (matches makeData's default `today`),
+// so the session is recent (<=7 days) and renders expanded by default.
+function recentDate(daysAgo: number): string {
+	return new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10);
+}
+
 function makeData(overrides: Record<string, unknown> = {}) {
 	return {
 		exercise: { id: 1, name: 'Bench Press', short_name: null },
@@ -129,7 +135,7 @@ describe('Exercise Detail Page', () => {
 				data: makeData({
 					previousSessions: [
 						{
-							workout_date: '2025-06-01',
+							workout_date: recentDate(3),
 							comment: null,
 							sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 						}
@@ -315,7 +321,7 @@ describe('Exercise Detail Page', () => {
 					data: makeData({
 						previousSessions: [
 							{
-								workout_date: '2025-06-01',
+								workout_date: recentDate(3),
 								comment: 'Felt heavy',
 								sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 							}

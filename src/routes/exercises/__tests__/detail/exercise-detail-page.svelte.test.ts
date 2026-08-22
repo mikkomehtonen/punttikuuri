@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import ExerciseDetailPage from '../../[id]/+page.svelte';
 
 function makeData(overrides: Record<string, unknown> = {}) {
@@ -124,5 +124,137 @@ describe('Exercise Detail Page client-side date navigation', () => {
 		expect(view.weightInput().value).toBe('');
 		expect(view.repsInput().value).toBe('');
 		expect(view.commentTextarea().value).toBe('');
+	});
+});
+
+// `today` is fixed to '2026-08-20' in makeData, so:
+//   '2026-08-12' -> 8 days ago  -> old (collapsed by default)
+//   '2026-08-13' -> 7 days ago  -> recent (expanded by default, boundary)
+//   '2026-08-15' -> 5 days ago  -> recent (expanded by default)
+describe('Collapsible history for sessions older than 7 days', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	function historySession(overrides: Record<string, unknown> = {}) {
+		return { workout_date: '2026-08-12', comment: null, sets: [], ...overrides };
+	}
+
+	it('renders an old session date heading as a collapsed, keyboard-accessible button and hides sets and comment', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						comment: 'felt heavy',
+						sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+					})
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-12' });
+		expect(button.tagName).toBe('BUTTON');
+		expect(button).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('130 kg × 5')).not.toBeInTheDocument();
+		expect(screen.queryByText('felt heavy')).not.toBeInTheDocument();
+	});
+
+	it('expands an old session when its date heading is clicked, showing sets and comment and setting aria-expanded true', async () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						comment: 'felt heavy',
+						sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+					})
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-12' });
+		await fireEvent.click(button);
+
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('130 kg × 5')).toBeInTheDocument();
+		expect(screen.getByText('felt heavy')).toBeInTheDocument();
+	});
+
+	it('renders a recent session (<=7 days) expanded by default with sets and comment', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						workout_date: '2026-08-15',
+						comment: 'felt strong',
+						sets: [{ set_number: 1, weight_kg: 100, repetitions: 8 }]
+					})
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-15' });
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('100 kg × 8')).toBeInTheDocument();
+		expect(screen.getByText('felt strong')).toBeInTheDocument();
+	});
+
+	it('keeps a session exactly 7 days old expanded by default', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						workout_date: '2026-08-13',
+						sets: [{ set_number: 1, weight_kg: 90, repetitions: 10 }]
+					})
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-13' });
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('90 kg × 10')).toBeInTheDocument();
+	});
+
+	it('does not render the history section when there are no previous sessions', () => {
+		setup(makeData());
+		expect(screen.queryByText('Previous Workouts')).not.toBeInTheDocument();
+	});
+
+	it('renders a date heading but no sets list for a session with no sets', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({ workout_date: '2026-08-15', comment: 'no sets logged' })
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-15' });
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		// The (present) comment is shown, but there is no sets list.
+		expect(screen.getByText('no sets logged')).toBeInTheDocument();
+		expect(screen.queryByText(/Set \d+/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/kg ×/)).not.toBeInTheDocument();
+	});
+
+	it('toggles expansion on each click of the date heading', async () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({ sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }] })
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-12' });
+		expect(button).toHaveAttribute('aria-expanded', 'false');
+
+		await fireEvent.click(button);
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('130 kg × 5')).toBeInTheDocument();
+
+		await fireEvent.click(button);
+		expect(button).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('130 kg × 5')).not.toBeInTheDocument();
 	});
 });

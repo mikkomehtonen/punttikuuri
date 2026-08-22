@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Tooling / agent config (managed by peck & opencode, not project source)
+.opencode/

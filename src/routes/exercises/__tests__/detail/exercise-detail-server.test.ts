@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveLastSet } from '../../[id]/utils';
+import { deriveLastSet, daysAgoFrom, isOldSession } from '../../[id]/utils';
 
 describe('deriveLastSet', () => {
 	it('should return last set from todaySets when todaySets is non-empty', () => {
@@ -78,5 +78,38 @@ describe('deriveLastSet', () => {
 
 		const result = deriveLastSet(todaySets, []);
 		expect(result).toEqual({ weight_kg: 72.5, repetitions: 8 });
+	});
+});
+
+describe('daysAgoFrom', () => {
+	const today = '2026-08-20';
+
+	it('returns 0 for the same date', () => {
+		expect(daysAgoFrom('2026-08-20', today)).toBe(0);
+	});
+
+	it('returns the whole-day difference for past dates', () => {
+		expect(daysAgoFrom('2026-08-15', today)).toBe(5);
+		expect(daysAgoFrom('2026-08-13', today)).toBe(7);
+		expect(daysAgoFrom('2026-08-12', today)).toBe(8);
+	});
+
+	it('returns a negative value for future dates', () => {
+		expect(daysAgoFrom('2026-08-22', today)).toBe(-2);
+	});
+});
+
+describe('isOldSession', () => {
+	const today = '2026-08-20';
+
+	it('is false for sessions within 7 days (including exactly 7)', () => {
+		expect(isOldSession('2026-08-20', today)).toBe(false);
+		expect(isOldSession('2026-08-15', today)).toBe(false);
+		expect(isOldSession('2026-08-13', today)).toBe(false);
+	});
+
+	it('is true for sessions strictly older than 7 days', () => {
+		expect(isOldSession('2026-08-12', today)).toBe(true);
+		expect(isOldSession('2026-01-01', today)).toBe(true);
 	});
 });
