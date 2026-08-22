@@ -7,7 +7,7 @@ description: >
   Output: completion report with reviewer SHA verdicts.
 mode: all
 temperature: 0.5
-model: kolibri/dirk-qwen3.8-27b
+model: isoruokki/qwen3.8-27b-nvfp4
 tools:
   question: false
   task: true
