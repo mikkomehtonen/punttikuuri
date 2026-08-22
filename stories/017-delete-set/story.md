@@ -1,15 +1,18 @@
 # Delete Set from Current Exercise Session
 
 ## Context
+
 Users occasionally enter a set by accident and need a way to remove it. Currently workout data is create-only, so mistakes cannot be corrected. The feature allows deletion of sets only from the currently selected exercise session (the session for the chosen workout date), with a confirmation step to prevent accidental deletion. Sets from historical sessions remain immutable.
 
 ## Out of Scope
+
 - Deleting sets from historical sessions; history is read-only.
 - Editing weight/repetitions of an existing set.
 - Deleting entire workout sessions or exercise types.
 - Renumbering sets in historical sessions.
 
 ## Implementation approach
+
 - Add a named SvelteKit action `deleteSet` in `src/routes/exercises/[id]/+page.server.ts`. The action receives `workout_date` and `set_number` from the form.
 - Ownership check uses existing `getOwnedExerciseId` helper; date validation uses `validateWorkoutDate`.
 - Find the workout session for the user, exercise, and date. If not found, return 400 error.
@@ -22,6 +25,7 @@ Users occasionally enter a set by accident and need a way to remove it. Currentl
 ## Tasks
 
 ### Task 1 - Server deleteSet action with renumbering
+
 - valid session exists + valid set_number + valid workout_date + user owns exercise + action submitted
   - → set entry deleted from database
   - → remaining sets renumbered sequentially starting at 1
@@ -37,6 +41,7 @@ Users occasionally enter a set by accident and need a way to remove it. Currentl
   - → no database changes
 
 ### Task 2 - UI delete button and confirmation modal
+
 - selectedDateSets non-empty + page rendered
   - → each set card shows a delete button
   - → button is styled as ghost variant
@@ -51,11 +56,13 @@ Users occasionally enter a set by accident and need a way to remove it. Currentl
   - → set list unchanged
 
 ### Task 3 - History immutability
+
 - previousSessions rendered
   - → no delete buttons present in history set cards
   - → history sets are display-only
 
 ## Notes
+
 - Confirmation uses a custom modal, not native `confirm()`, to keep UI consistent.
 - Deleting the last set leaves an empty session; session record remains but shows no sets.
 - Renumbering ensures set numbers stay sequential for UI display and future `logSet` prefill logic.

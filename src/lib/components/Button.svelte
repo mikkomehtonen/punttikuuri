@@ -5,12 +5,14 @@
 		variant = 'primary',
 		href = undefined,
 		type = 'button',
+		ariaLabel = undefined,
 		onclick = undefined,
 		children
 	}: {
 		variant?: 'primary' | 'secondary' | 'ghost';
 		href?: string;
 		type?: 'button' | 'submit' | 'reset';
+		ariaLabel?: string;
 		onclick?: (event: MouseEvent) => void;
 		children: Snippet;
 	} = $props();
@@ -26,11 +28,11 @@
 </script>
 
 {#if href}
-	<a {href} class={variantClasses[variant]} {onclick}>
+	<a {href} aria-label={ariaLabel} class={variantClasses[variant]} {onclick}>
 		{@render children()}
 	</a>
 {:else}
-	<button {type} class={variantClasses[variant]} {onclick}>
+	<button {type} aria-label={ariaLabel} class={variantClasses[variant]} {onclick}>
 		{@render children()}
 	</button>
 {/if}

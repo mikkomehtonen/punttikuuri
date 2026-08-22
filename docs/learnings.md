@@ -11,17 +11,6 @@
 
 ---
 
-## Validate static assets via file reads
-
-**Date**: 2026-06-10
-**Area**: testing | asset verification
-**What happened**: Acceptance criteria required confirming that the favicon is served from `/favicon.svg`. Instead of full HTTP integration, reading the layout file and confirming the static href string proved sufficient for the story's ACs and kept tests fast.
-**Takeaway**: For static asset verification, direct file reads can satisfy ACs without needing full server integration, unless the story explicitly demands HTTP checks.
-
----
-
----
-
 ## Avoid explicit `any` types in TypeScript tests
 
 **Date**: 2026-06-10
@@ -105,10 +94,10 @@
 
 ## Reviewer lint gate is repo-wide `prettier --check .` (includes `stories/*.md`)
 
-**Date**: 2026-08-20
+**Date**: 2026-08-22
 **Area**: workflow | linting
-**What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered.
-**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` included — and `prettier --write` the offenders. Prettier's markdown reformatting can mangle inline code spans containing backticks; review the diff after `--write`.
+**What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered. In story 018 the reviewer fixed the pre-existing story-file violations itself and left the changes **uncommitted**, so the branch tree was dirty after a Pass verdict.
+**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` included — and `prettier --write` the offenders (review the diff; markdown reformatting can mangle inline code spans). After any reviewer run, check `git status` — reviewers may fix lint issues and leave them uncommitted; commit (or revert) those changes before reporting completion.
 
 ---
 

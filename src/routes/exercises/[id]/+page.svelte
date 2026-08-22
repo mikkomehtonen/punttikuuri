@@ -54,6 +54,27 @@
 	function closeDeleteModal() {
 		deleteTarget = null;
 	}
+
+	let editTarget = $state<SetSummary | null>(null);
+	let editWeight = $state('');
+	let editReps = $state('');
+	let editDialogEl = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		if (editTarget) {
+			editDialogEl?.focus();
+		}
+	});
+
+	function openEditModal(set: SetSummary) {
+		editWeight = String(set.weight_kg);
+		editReps = String(set.repetitions);
+		editTarget = set;
+	}
+
+	function closeEditModal() {
+		editTarget = null;
+	}
 </script>
 
 <svelte:head>
@@ -132,10 +153,49 @@
 							<span class="text-stone-500 dark:text-stone-400"
 								>{t('workout.set', locale)} {set.set_number}</span
 							>
-							<div class="flex items-center gap-2">
+							<div class="flex items-center gap-1">
 								<span class="font-medium">{set.weight_kg} kg &times; {set.repetitions}</span>
-								<Button variant="ghost" onclick={() => openDeleteModal(set)}>
-									{t('workout.delete', locale)}
+								<Button
+									variant="ghost"
+									ariaLabel={t('workout.edit', locale)}
+									onclick={() => openEditModal(set)}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-5 w-5"
+										aria-hidden="true"
+									>
+										<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+									</svg>
+								</Button>
+								<Button
+									variant="ghost"
+									ariaLabel={t('workout.delete', locale)}
+									onclick={() => openDeleteModal(set)}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-5 w-5"
+										aria-hidden="true"
+									>
+										<path d="M3 6h18" />
+										<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+										<path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+										<line x1="10" y1="11" x2="10" y2="17" />
+										<line x1="14" y1="11" x2="14" y2="17" />
+									</svg>
 								</Button>
 							</div>
 						</div>
@@ -232,6 +292,72 @@
 					<Button variant="primary" type="submit">
 						{t('workout.confirm', locale)}
 					</Button>
+				</form>
+			</Card>
+		</div>
+	</div>
+{/if}
+
+{#if editTarget}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+		role="presentation"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) closeEditModal();
+		}}
+		onkeydown={(event) => {
+			if (event.key === 'Escape') closeEditModal();
+		}}
+	>
+		<div
+			class="w-full max-w-sm"
+			role="dialog"
+			aria-modal="true"
+			aria-label={t('workout.edit', locale)}
+			tabindex="-1"
+			bind:this={editDialogEl}
+		>
+			<Card>
+				<h2 class="mb-2 text-lg font-semibold">{t('workout.edit', locale)}</h2>
+				<p class="mb-4 text-sm text-stone-600 dark:text-stone-300">
+					{t('workout.set', locale)}
+					{editTarget.set_number}
+				</p>
+				<form method="POST" action="?/editSet" class="flex flex-col gap-4">
+					<input type="hidden" name="workout_date" value={selectedDate} />
+					<input type="hidden" name="set_number" value={editTarget.set_number} />
+					<div class="flex gap-4">
+						<div class="flex-1">
+							<Input
+								label={t('workout.weight', locale)}
+								name="weight_kg"
+								type="text"
+								inputmode="decimal"
+								bind:value={editWeight}
+								required
+								placeholder="0.0"
+							/>
+						</div>
+						<div class="flex-1">
+							<Input
+								label={t('workout.reps', locale)}
+								name="repetitions"
+								type="text"
+								inputmode="numeric"
+								bind:value={editReps}
+								required
+								placeholder="0"
+							/>
+						</div>
+					</div>
+					<div class="flex justify-end gap-2">
+						<Button variant="secondary" type="button" onclick={closeEditModal}>
+							{t('workout.cancel', locale)}
+						</Button>
+						<Button variant="primary" type="submit">
+							{t('workout.confirm', locale)}
+						</Button>
+					</div>
 				</form>
 			</Card>
 		</div>

@@ -52,6 +52,7 @@
 	"workout.noSetsForComment": "Kirjaa vähintään yksi sarja ennen kommentin lisäämistä",
 	"workout.delete": "Poista",
 	"workout.deleteConfirm": "Poistetaanko sarja?",
+	"workout.edit": "Muokkaa",
 	"workout.cancel": "Peruuta",
 	"workout.confirm": "Vahvista",
 	"workout.noSetsForDate": "Ei sarjoja tälle päivälle",

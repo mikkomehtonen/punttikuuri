@@ -52,6 +52,7 @@
 	"workout.noSetsForComment": "Log at least one set before adding a comment",
 	"workout.delete": "Delete",
 	"workout.deleteConfirm": "Delete set?",
+	"workout.edit": "Edit",
 	"workout.cancel": "Cancel",
 	"workout.confirm": "Confirm",
 	"workout.noSetsForDate": "No sets for this date",

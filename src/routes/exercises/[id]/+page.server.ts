@@ -294,5 +294,64 @@ export const actions: Actions = {
 		deleteSetEntry(db, session.id, setNumber);
 
 		throw redirect(303, `/exercises/${exerciseId}?date=${workoutDate}`);
+	},
+
+	editSet: async ({ request, params, locals }) => {
+		const owned = getOwnedExerciseId(locals, params);
+		if ('failure' in owned) {
+			return owned.failure;
+		}
+		const { exerciseId, userId } = owned;
+
+		const formData = await request.formData();
+		const workoutDateStr = String(formData.get('workout_date') ?? '');
+		const setNumberStr = String(formData.get('set_number') ?? '');
+		const weightKgStr = String(formData.get('weight_kg') ?? '');
+		const repetitionsStr = String(formData.get('repetitions') ?? '');
+
+		const workoutDate =
+			workoutDateStr === '' ? new Date().toISOString().slice(0, 10) : workoutDateStr;
+		const dateError = validateWorkoutDate(workoutDate, locals.locale);
+		if (dateError) {
+			return fail(400, { error: dateError });
+		}
+
+		const session = findSession(userId, exerciseId, workoutDate);
+
+		if (!session) {
+			return fail(400, { error: t('workout.noSetsForDate', locals.locale) });
+		}
+
+		const setNumber = Number(setNumberStr);
+		if (!Number.isInteger(setNumber) || setNumber <= 0) {
+			return fail(400, { error: t('workout.invalidSetNumber', locals.locale) });
+		}
+
+		const weightError = validateWeight(weightKgStr);
+		if (weightError) {
+			return fail(400, { error: weightError });
+		}
+
+		const repsError = validateReps(repetitionsStr);
+		if (repsError) {
+			return fail(400, { error: repsError });
+		}
+
+		const entry = db
+			.select({ id: setEntry.id })
+			.from(setEntry)
+			.where(and(eq(setEntry.workout_session_id, session.id), eq(setEntry.set_number, setNumber)))
+			.get();
+
+		if (!entry) {
+			return fail(400, { error: t('workout.invalidSetNumber', locals.locale) });
+		}
+
+		db.update(setEntry)
+			.set({ weight_kg: Number(weightKgStr), repetitions: Number(repetitionsStr) })
+			.where(eq(setEntry.id, entry.id))
+			.run();
+
+		throw redirect(303, `/exercises/${exerciseId}?date=${workoutDate}`);
 	}
 };

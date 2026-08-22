@@ -43,6 +43,11 @@ describe('i18n', () => {
 		expect(t('workout.submit', 'fi')).toBe('Tallenna sarja');
 	});
 
+	it('should have workout.edit in English and Finnish', () => {
+		expect(t('workout.edit', 'en')).toBe('Edit');
+		expect(t('workout.edit', 'fi')).toBe('Muokkaa');
+	});
+
 	it('should have app.tagline in English', () => {
 		expect(t('app.tagline', 'en')).toBe('Log your gym workouts');
 	});

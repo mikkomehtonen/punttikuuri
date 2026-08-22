@@ -24,10 +24,11 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Back-date Exercise Logging** — A date selector on the exercise detail page (defaulting to today) lets users log sets and session comments against any past day via a `?date=YYYY-MM-DD` query parameter; future dates are rejected ([story](stories/015-log-exercise-previous-days/story.md))
 - **Root Redirect** — Authenticated users visiting `/` are redirected to `/exercises` for seamless entry ([story](stories/016-extend-session-duration/story.md))
 - **Set Deletion** — Delete individual sets from the current exercise session with confirmation; sets are renumbered to keep sequential numbering ([story](stories/017-delete-set/story.md))
+- **Set Editing** — Edit weight and repetitions for individual sets in the current exercise session with validation; set numbers remain unchanged ([story](stories/018-edit-set-values/story.md))
 
 ## Non-Goals
 
-- Editing exercises or sessions, and deleting sets from historical sessions — core workout data is create-only except for session comments and deleting sets from the current session (session comments are editable, see Session Comments feature)
+- Editing exercises or sessions, and deleting/editing sets from historical sessions — core workout data is create-only except for session comments and deleting/editing sets from the current session (session comments are editable, see Session Comments feature)
 - Pounds unit support (kilograms only)
 - Copying previous workouts as templates
 - Personal records, volume calculations, or progress charts
@@ -38,7 +39,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 
 ## Known Limitations
 
-- No way to correct mistakes in entered data for historical sessions — users cannot edit exercises, workout sessions, or sets from past sessions; sets from the current session can be deleted with confirmation (session comments are the only editable field for all sessions).
+- No way to correct mistakes in entered data for historical sessions — users cannot edit exercises, workout sessions, or sets from past sessions; sets from the current session can be edited for weight and repetitions and deleted with confirmation (session comments are editable for all sessions).
 - Weight is displayed and entered in kilograms only.
 - Authentication uses simple username/password without email; password recovery is admin-driven via the admin page.
 - PWA offline support is limited to static asset caching; workout data requires a network connection.
