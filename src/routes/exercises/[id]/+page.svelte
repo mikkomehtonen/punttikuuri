@@ -21,6 +21,7 @@
 	const selectedDateSets = $derived(data.selectedDateSets ?? []);
 	const selectedDateComment = $derived(data.selectedDateComment ?? null);
 	const previousSessions = $derived(data.previousSessions ?? []);
+	const latestHistoryDate = $derived(previousSessions[0]?.workout_date);
 
 	let weight = $state(data.lastSet ? String(data.lastSet.weight_kg) : '');
 	let reps = $state(data.lastSet ? String(data.lastSet.repetitions) : '');
@@ -35,13 +36,19 @@
 	});
 
 	// Collapsible history: sessions older than 7 days start collapsed, recent
-	// ones start expanded. The default is derived from the `today` value provided
-	// by load (not the client clock) so SSR and hydration agree; the map only
-	// stores explicit user toggles, keyed by workout_date.
+	// ones start expanded. The latest session in the list (`previousSessions[0]`,
+	// newest-first) is always expanded by default regardless of age, so the most
+	// recent weights stay visible even after a long break. Defaults derive from
+	// the `today` value provided by load (not the client clock) so SSR and
+	// hydration agree; the map only stores explicit user toggles, keyed by
+	// workout_date.
 	let expanded = $state<Record<string, boolean>>({});
 
 	function isExpanded(session: { workout_date: string }): boolean {
-		return expanded[session.workout_date] ?? !isOldSession(session.workout_date, today);
+		const isLatest = session.workout_date === latestHistoryDate;
+		return (
+			expanded[session.workout_date] ?? (isLatest || !isOldSession(session.workout_date, today))
+		);
 	}
 
 	function toggleExpanded(session: { workout_date: string }): void {

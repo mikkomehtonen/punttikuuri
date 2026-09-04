@@ -26,6 +26,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Set Deletion** — Delete individual sets from the current exercise session with confirmation; sets are renumbered to keep sequential numbering ([story](stories/017-delete-set/story.md))
 - **Set Editing** — Edit weight and repetitions for individual sets in the current exercise session with validation; set numbers remain unchanged ([story](stories/018-edit-set-values/story.md))
 - **Collapsible Old Workouts** — Workout history sessions older than 7 days collapse to date only by default; clicking the date expands to show sets and comment ([story](stories/019-collapse-old-workouts/story.md))
+- **Latest Workout Always Visible** — The newest session in the workout history is expanded by default even when older than 7 days, so the latest weights and set lengths are visible without clicking; it remains collapsible ([story](stories/020-show-latest-exercise/story.md))
 
 ## Non-Goals
 

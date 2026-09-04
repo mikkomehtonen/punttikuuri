@@ -136,3 +136,12 @@
 **Takeaway**: For modals in this repo: give the dialog `tabindex="-1"` + `bind:this`, focus it from a `$effect` when it opens, keep `onclick` (backdrop close via `event.target === event.currentTarget`) and `onkeydown` (Escape) on the overlay so events bubble from the focused dialog, and test focus (`vi.waitFor(() => expect(dialog).toHaveFocus())`) plus Escape close.
 
 ---
+
+## A single-item fixture flips to "latest" when the default-expands-latest rule is added
+
+**Date**: 2026-09-04
+**Area**: testing | Svelte
+**What happened**: Story 020 made `previousSessions[0]` (the latest history session) expand by default even when >7 days old. Three existing tests used a *single* old session (e.g. `workout_date: '2026-08-12'`) and asserted it started collapsed — they all broke, because that lone session was now both the oldest and the latest, hence auto-expanded.
+**Takeaway**: When you change a `$derived` default that keys off positional order (`arr[0]`), re-check fixtures where the only item also satisfies that key. To keep asserting an old session stays collapsed, prepend a newer session so the subject is non-latest; to assert "single old expands," use a one-session fixture and assert expanded. Keep distinct `weight_kg` per session in multi-session fixtures so content presence/absence checks are unambiguous.
+
+---

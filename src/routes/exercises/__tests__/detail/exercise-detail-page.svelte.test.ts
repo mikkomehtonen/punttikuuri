@@ -145,6 +145,11 @@ describe('Collapsible history for sessions older than 7 days', () => {
 			makeData({
 				previousSessions: [
 					historySession({
+						workout_date: '2026-08-18',
+						sets: [{ set_number: 1, weight_kg: 150, repetitions: 3 }]
+					}),
+					historySession({
+						workout_date: '2026-08-12',
 						comment: 'felt heavy',
 						sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 					})
@@ -154,6 +159,7 @@ describe('Collapsible history for sessions older than 7 days', () => {
 
 		const button = screen.getByRole('button', { name: '2026-08-12' });
 		expect(button.tagName).toBe('BUTTON');
+		// Older, non-latest session stays collapsed by default.
 		expect(button).toHaveAttribute('aria-expanded', 'false');
 		expect(screen.queryByText('130 kg × 5')).not.toBeInTheDocument();
 		expect(screen.queryByText('felt heavy')).not.toBeInTheDocument();
@@ -164,6 +170,11 @@ describe('Collapsible history for sessions older than 7 days', () => {
 			makeData({
 				previousSessions: [
 					historySession({
+						workout_date: '2026-08-18',
+						sets: [{ set_number: 1, weight_kg: 150, repetitions: 3 }]
+					}),
+					historySession({
+						workout_date: '2026-08-12',
 						comment: 'felt heavy',
 						sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
 					})
@@ -241,7 +252,14 @@ describe('Collapsible history for sessions older than 7 days', () => {
 		setup(
 			makeData({
 				previousSessions: [
-					historySession({ sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }] })
+					historySession({
+						workout_date: '2026-08-18',
+						sets: [{ set_number: 1, weight_kg: 150, repetitions: 3 }]
+					}),
+					historySession({
+						workout_date: '2026-08-12',
+						sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
+					})
 				]
 			})
 		);
@@ -256,5 +274,108 @@ describe('Collapsible history for sessions older than 7 days', () => {
 		await fireEvent.click(button);
 		expect(button).toHaveAttribute('aria-expanded', 'false');
 		expect(screen.queryByText('130 kg × 5')).not.toBeInTheDocument();
+	});
+});
+
+describe('Expand the latest history session by default (even when old)', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	function historySession(overrides: Record<string, unknown> = {}) {
+		return { workout_date: '2026-08-10', comment: null, sets: [], ...overrides };
+	}
+
+	it('expands an old (>7 day) latest session by default and renders its comment and set', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						workout_date: '2026-08-10',
+						comment: 'heavy day',
+						sets: [{ set_number: 1, weight_kg: 140, repetitions: 4 }]
+					})
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-10' });
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('heavy day')).toBeInTheDocument();
+		expect(screen.getByText('140 kg × 4')).toBeInTheDocument();
+	});
+
+	it('expands the newest-of-two old sessions but keeps the older one collapsed', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						workout_date: '2026-08-10',
+						sets: [{ set_number: 1, weight_kg: 140, repetitions: 4 }]
+					}),
+					historySession({
+						workout_date: '2026-07-31',
+						sets: [{ set_number: 1, weight_kg: 120, repetitions: 6 }]
+					})
+				]
+			})
+		);
+
+		const latest = screen.getByRole('button', { name: '2026-08-10' });
+		const older = screen.getByRole('button', { name: '2026-07-31' });
+
+		expect(latest).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('140 kg × 4')).toBeInTheDocument();
+
+		expect(older).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('120 kg × 6')).not.toBeInTheDocument();
+	});
+
+	it('stays user-collapsible: toggling the latest old session hides its set, toggling again reveals it', async () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({ sets: [{ set_number: 1, weight_kg: 140, repetitions: 4 }] })
+				]
+			})
+		);
+
+		const button = screen.getByRole('button', { name: '2026-08-10' });
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('140 kg × 4')).toBeInTheDocument();
+
+		await fireEvent.click(button);
+		expect(button).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('140 kg × 4')).not.toBeInTheDocument();
+
+		await fireEvent.click(button);
+		expect(button).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('140 kg × 4')).toBeInTheDocument();
+	});
+
+	it('keeps the newest recent session expanded while collapsing an older one', () => {
+		setup(
+			makeData({
+				previousSessions: [
+					historySession({
+						workout_date: '2026-08-15',
+						sets: [{ set_number: 1, weight_kg: 110, repetitions: 5 }]
+					}),
+					historySession({
+						workout_date: '2026-07-31',
+						sets: [{ set_number: 1, weight_kg: 120, repetitions: 6 }]
+					})
+				]
+			})
+		);
+
+		const latest = screen.getByRole('button', { name: '2026-08-15' });
+		const older = screen.getByRole('button', { name: '2026-07-31' });
+
+		expect(latest).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText('110 kg × 5')).toBeInTheDocument();
+
+		expect(older).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('120 kg × 6')).not.toBeInTheDocument();
 	});
 });
