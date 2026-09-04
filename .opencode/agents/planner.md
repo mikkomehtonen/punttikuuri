@@ -6,8 +6,8 @@ description: >
   Input: feature description or bug report.
   Output: committed story file with acceptance criteria and implementation approach.
 mode: all
-temperature: 0.4
-model: kolibri/muse-glimmer
+temperature: 0.2
+model: kolibri/dirk-qwen3.8-27b
 tools:
   task: true
   grep: false
@@ -31,13 +31,13 @@ You are a planning agent. You receive feature requests and produce fully-specifi
    - `STORY_FILE` is the template to fill.
    - Output: `Template loaded: N sections to fill.` where N is the count of sections.
 
-3. Research the codebase through @explore so every section can be filled without guessing.
-   - Delegate focused questions instead of reading implementation files yourself.
-   - Run independent investigations in parallel when useful.
-   - Ask for file:line evidence and a concise architectural synthesis.
-   - Use separate tasks for separate subsystems.
-   - Cover existing implementations of similar features, architectural patterns, and dependency manifests (`package.json`, `go.mod`, lockfiles, etc.).
-   - Read files directly only when writing or validating the final story requires it.
+3. Research the codebase through @explorer so every section can be filled without guessing.
+   - **Mandatory boundary:** all source-code discovery and architectural investigation MUST be delegated with the `task` tool using `subagent_type: "explorer"`. Do not inspect source code, tests, configuration, or dependency manifests yourself with read, grep, glob, or shell commands.
+   - You may read `PRODUCT_FILE` and files under the current story directory directly. This exception does not extend to project source or configuration files.
+   - Before writing planning artifacts, make at least one focused @explorer call. Use separate calls for independent subsystems when that keeps each question bounded.
+   - Every task prompt must state the feature or bug, the exact question, the desired thoroughness (`quick`, `medium`, or `very thorough`), and request concise file:line evidence.
+   - Ask @explorer to cover existing implementations of similar features, architectural patterns, tests, and dependency manifests (`package.json`, `go.mod`, lockfiles, etc.) relevant to the question.
+   - Treat Explorer's response as compressed evidence. If it leaves a material unknown, delegate a follow-up investigation instead of opening the referenced source files yourself.
 
 4. Ask focused questions to fill remaining unknowns.
    - Cover acceptance criteria, edge cases, and technology choices.
