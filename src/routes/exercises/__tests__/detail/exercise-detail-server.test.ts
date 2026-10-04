@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { deriveLastSet, daysAgoFrom, isOldSession } from '../../[id]/utils';
+import {
+	deriveLastSet,
+	daysAgoFrom,
+	isOldSession,
+	formatDuration,
+	formatDistanceKm
+} from '../../[id]/utils';
 
 describe('deriveLastSet', () => {
 	it('should return last set from todaySets when todaySets is non-empty', () => {
@@ -111,5 +117,37 @@ describe('isOldSession', () => {
 	it('is true for sessions strictly older than 7 days', () => {
 		expect(isOldSession('2026-08-12', today)).toBe(true);
 		expect(isOldSession('2026-01-01', today)).toBe(true);
+	});
+});
+
+describe('formatDuration', () => {
+	it('formats sub-hour durations with zero-padded minutes and seconds', () => {
+		expect(formatDuration(45)).toBe('0:00:45');
+		expect(formatDuration(0)).toBe('0:00:00');
+	});
+
+	it('formats mixed h:mm:ss durations', () => {
+		expect(formatDuration(3930)).toBe('1:05:30');
+		expect(formatDuration(3661)).toBe('1:01:01');
+	});
+
+	it('handles the 24-hour boundary', () => {
+		expect(formatDuration(86400)).toBe('24:00:00');
+	});
+});
+
+describe('formatDistanceKm', () => {
+	it('renders whole km without trailing decimals', () => {
+		expect(formatDistanceKm(10000)).toBe('10 km');
+		expect(formatDistanceKm(1000)).toBe('1 km');
+	});
+
+	it('renders fractional km with shortest round-trip digits', () => {
+		expect(formatDistanceKm(5050)).toBe('5.05 km');
+		expect(formatDistanceKm(42195)).toBe('42.195 km');
+	});
+
+	it('renders zero meters as 0 km', () => {
+		expect(formatDistanceKm(0)).toBe('0 km');
 	});
 });

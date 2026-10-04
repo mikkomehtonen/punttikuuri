@@ -2,31 +2,6 @@
 
 ---
 
-## Use dynamic ports for HTTP tests
-
-**Date**: 2026-06-10
-**Area**: testing | reliability
-**What happened**: The HTTP accessibility test started a preview server on a hard‑coded port (4173). If another process occupies that port, the test fails, making it flaky.
-**Takeaway**: When spawning a server in tests, either choose an available random port (e.g., `0` to let the OS assign) or make the port configurable via environment variables to avoid collisions.
-
----
-
-## Avoid explicit `any` types in TypeScript tests
-
-**Date**: 2026-06-10
-**Area**: testing | TypeScript
-**What happened**: The `favicon-http.test.ts` used `let server: any;`, triggering the `@typescript-eslint/no-explicit-any` rule.
-**Takeaway**: Prefer explicit types such as `ReturnType<typeof spawn>` or the specific `ChildProcess` type to keep linting happy and improve type safety.
-
----
-
-## Assert containment, not just substring presence, in SSR tests
-
-**Date**: 2026-06-25
-**Area**: testing | SSR
-**What happened**: Initial layout logo tests used `expect(body).toContain(...)` to verify the logo was "inside the app name link". The code reviewer flagged this as false confidence because the substrings also appeared elsewhere in the body (nav links, header wrapper). A second iteration extracted the `<a href="/exercises">` substring first and asserted the logo/classes were inside that slice.
-**Takeaway**: When a test claims an element is nested inside another, extract the parent element's HTML (e.g. with a regex) and assert on that slice rather than the whole rendered body.
-
 ---
 
 ## SvelteKit public env vars must use the `PUBLIC_` prefix
@@ -61,16 +36,9 @@
 **Date**: 2026-08-06
 **Area**: TypeScript | SvelteKit
 **What happened**: A shared helper returning `ReturnType<typeof fail>` caused `Property 'error' does not exist on type '{}'` on the page's `form?.error`, because `ReturnType<typeof fail>` resolves to a generic `ActionFailure` that loses the `{ error: string }` data shape.
-**Takeaway**: When a helper returns a SvelteKit action failure, type it as `ActionFailure<{ error: string }>` (imported from `@sveltejs/kit`) rather than `ReturnType<typeof fail>`, so the page's `ActionData` keeps the `error` field.
+**Takeaway**: When a helper returns a SvelteKit action failure, type it as `ActionFailure<{ error: string }>` (imported from `@sveltejs/kit`) rather than `ReturnType<typeof fail>`, so the page's `ActionData` keeps the `error` field. Note the page's `form` prop is the **unwrapped** `fail()` data bag — it has no `ok`/`status`/`type` properties. To run a component effect only on successful submits (e.g. clearing form fields), gate on `!form`: `form` is non-null only after a failed action; on success it is null (full reload or after an enhanced submit).
 
 ---
-
-## Exercise detail server-test harness is duplicated
-
-**Date**: 2026-08-20
-**Area**: testing | SvelteKit
-**What happened**: Story 014 added `exercise-detail-logset-server.test.ts` by copying the ~70-line harness (vi.mock of `$lib/server/db`, in-memory sqlite + `migrate`, user seeding, `mockEvent`) from `exercise-detail-comments-server.test.ts`. Code reviewer flagged the duplication as technical debt.
-**Takeaway**: If a third exercise-detail server test file is needed, extract the shared harness (db setup, user seeding, `mockEvent`) into one helper module and import it from all three files instead of copying a third time.
 
 ---
 
@@ -97,7 +65,7 @@
 **Date**: 2026-08-22
 **Area**: workflow | linting
 **What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered. In story 018 the reviewer fixed the pre-existing story-file violations itself and left the changes **uncommitted**, so the branch tree was dirty after a Pass verdict.
-**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` included — and `prettier --write` the offenders (review the diff; markdown reformatting can mangle inline code spans). After any reviewer run, check `git status` — reviewers may fix lint issues and leave them uncommitted; commit (or revert) those changes before reporting completion.
+**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` and `drizzle/` included — and `prettier --write` the offenders (review the diff; markdown reformatting can mangle inline code spans). After `drizzle-kit generate`, run `npx prettier --write drizzle` — the generated `.sql`/snapshot/journal files fail the check as emitted. After any reviewer run, check `git status` — reviewers may fix lint issues and leave them uncommitted; commit (or revert) those changes before reporting completion.
 
 ---
 
@@ -141,7 +109,25 @@
 
 **Date**: 2026-09-04
 **Area**: testing | Svelte
-**What happened**: Story 020 made `previousSessions[0]` (the latest history session) expand by default even when >7 days old. Three existing tests used a *single* old session (e.g. `workout_date: '2026-08-12'`) and asserted it started collapsed — they all broke, because that lone session was now both the oldest and the latest, hence auto-expanded.
+**What happened**: Story 020 made `previousSessions[0]` (the latest history session) expand by default even when >7 days old. Three existing tests used a _single_ old session (e.g. `workout_date: '2026-08-12'`) and asserted it started collapsed — they all broke, because that lone session was now both the oldest and the latest, hence auto-expanded.
 **Takeaway**: When you change a `$derived` default that keys off positional order (`arr[0]`), re-check fixtures where the only item also satisfies that key. To keep asserting an old session stays collapsed, prepend a newer session so the subject is non-latest; to assert "single old expands," use a one-session fixture and assert expanded. Keep distinct `weight_kg` per session in multi-session fixtures so content presence/absence checks are unambiguous.
+
+---
+
+## drizzle-kit 0.31 SQLite text `enum` is type-only — no CHECK constraint
+
+**Date**: 2026-10-04
+**Area**: database | drizzle | migrations
+**What happened**: Story 021 typed `exercise_type.kind` with `text('kind', { enum: [...] })` expecting drizzle-kit to emit a `CHECK` constraint. It does not (verified: `enumValues` appears nowhere in drizzle-kit 0.31.10's SQLite generator; regenerating reported "No schema changes"). The enum option only infers the TS union.
+**Takeaway**: For a DB-enforced enum in this repo, declare the CHECK explicitly: keep an `as const` `KIND_VALUES` tuple in `schema.ts`, use it for both the column type (`{ enum: KIND_VALUES }`) and a table-level `check()` whose `sql` template interpolates the values via `sql.raw` from the same tuple (bound parameters are illegal in DDL, hence `sql.raw` — safe only for compile-time literals; see `exerciseType` in `schema.ts`). Regenerating an unreleased migration changes the journal `tag`/`when`; devs who applied the old tag should delete their local `data/*.db` rather than re-run the rebuild.
+
+---
+
+## npm audit test fails from upstream advisories — confirm pre-existing, don't fix in feature stories
+
+**Date**: 2026-10-04
+**Area**: testing | dependencies
+**What happened**: `app.test.ts > Story 005 > should have zero npm audit vulnerabilities` fails on current branches because advisories were published after the lockfile was last updated (transitive dev deps: `vitest`, `@vitest/mocker`, `undici`, etc.). It fails identically at the pre-story base commit.
+**Takeaway**: When this test fails, verify it is pre-existing (check out the base commit or confirm the story touched no `package.json`/`package-lock.json`) and report it as environmental dependency drift — do not remediate dependencies inside a feature story, especially when the story pins dependency versions.
 
 ---

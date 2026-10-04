@@ -34,6 +34,7 @@ function isExpanded(session: { workout_date: string }): boolean {
 ```
 
 Behavior rules:
+
 - If the user has toggled a session (`expanded[date]` is `true`/`false`), that value wins — so the latest session can still be collapsed and re-expanded by the user.
 - If not toggled, the default is expanded when the session is the latest (`isLatest`) OR recent (`!isOldSession`). This expands the latest session even when `isOldSession` is true.
 - Non-latest sessions keep the existing rule: expanded when ≤7 days old, collapsed when strictly >7 days old.

@@ -1,31 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ExerciseDetailPage from '../../[id]/+page.svelte';
-
-function makeData(overrides: Record<string, unknown> = {}) {
-	return {
-		exercise: { id: 1, name: 'Bench Press', short_name: null },
-		today: '2026-08-20',
-		selectedDate: '2026-08-20',
-		isToday: true,
-		selectedDateSets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
-		selectedDateComment: null as string | null,
-		previousSessions: [] as Array<{
-			workout_date: string;
-			comment: string | null;
-			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
-		}>,
-		lastSet: null as { weight_kg: number; repetitions: number } | null,
-		locale: 'en' as const,
-		theme: 'system' as const,
-		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-		logoLinkUrl: '',
-		isAdmin: false,
-		...overrides
-	};
-}
-
-type PageDataInput = ReturnType<typeof makeData>;
+import { makeData, historySession, type PageDataInput } from './fixtures';
 
 function setup(data: PageDataInput) {
 	const result = render(ExerciseDetailPage, { props: { data, form: null } });
@@ -135,10 +111,6 @@ describe('Collapsible history for sessions older than 7 days', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
-
-	function historySession(overrides: Record<string, unknown> = {}) {
-		return { workout_date: '2026-08-12', comment: null, sets: [], ...overrides };
-	}
 
 	it('renders an old session date heading as a collapsed, keyboard-accessible button and hides sets and comment', () => {
 		setup(
@@ -282,10 +254,6 @@ describe('Expand the latest history session by default (even when old)', () => {
 		document.body.innerHTML = '';
 	});
 
-	function historySession(overrides: Record<string, unknown> = {}) {
-		return { workout_date: '2026-08-10', comment: null, sets: [], ...overrides };
-	}
-
 	it('expands an old (>7 day) latest session by default and renders its comment and set', () => {
 		setup(
 			makeData({
@@ -335,7 +303,10 @@ describe('Expand the latest history session by default (even when old)', () => {
 		setup(
 			makeData({
 				previousSessions: [
-					historySession({ sets: [{ set_number: 1, weight_kg: 140, repetitions: 4 }] })
+					historySession({
+						workout_date: '2026-08-10',
+						sets: [{ set_number: 1, weight_kg: 140, repetitions: 4 }]
+					})
 				]
 			})
 		);

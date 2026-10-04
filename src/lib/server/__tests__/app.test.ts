@@ -186,6 +186,22 @@ describe('Task 4 - Workout validation (imported from production code)', () => {
 	it('should reject -Infinity weight', () => {
 		expect(validateWeight('-Infinity')).not.toBeNull();
 	});
+
+	it('should reject hex, exponent and whitespace-padded weight forms', () => {
+		expect(validateWeight('0x10')).not.toBeNull();
+		expect(validateWeight('1e2')).not.toBeNull();
+		expect(validateWeight(' 5 ')).not.toBeNull();
+	});
+
+	it('should accept leading-dot decimal weight (.5)', () => {
+		expect(validateWeight('.5')).toBeNull();
+	});
+
+	it('should reject hex, exponent and whitespace-padded reps forms', () => {
+		expect(validateReps('0x10')).not.toBeNull();
+		expect(validateReps('1e2')).not.toBeNull();
+		expect(validateReps(' 5 ')).not.toBeNull();
+	});
 });
 
 describe('Story 015 - Workout date validation', () => {

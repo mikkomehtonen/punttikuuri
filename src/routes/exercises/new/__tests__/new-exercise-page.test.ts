@@ -39,4 +39,33 @@ describe('New Exercise Page', () => {
 		expect(body).toContain('Back to exercises');
 		expect(body).toContain('text-stone-600');
 	});
+
+	it('renders a kind radio group with strength checked by default', () => {
+		const { body } = render(NewExercisePage, {
+			props: { data: makeData(), form: null }
+		});
+
+		expect(body).toContain('<fieldset>');
+		expect(body).toContain('Exercise type');
+		expect(body).toContain('name="kind"');
+		expect(body).toContain('value="strength"');
+		expect(body).toContain('value="cardio"');
+		expect(body).toContain('>Strength<');
+		expect(body).toContain('>Cardio<');
+
+		const strengthChecked =
+			/<input[^>]*type="radio"[^>]*name="kind"[^>]*value="strength"[^>]*checked/.test(body);
+		expect(strengthChecked).toBe(true);
+		expect(body).not.toMatch(/<input[^>]*value="cardio"[^>]*checked/);
+	});
+
+	it('renders the kind radio group labels in Finnish when locale is fi', () => {
+		const { body } = render(NewExercisePage, {
+			props: { data: makeData({ locale: 'fi' }), form: null }
+		});
+
+		expect(body).toContain('Harjoituksen tyyppi');
+		expect(body).toContain('>Voima<');
+		expect(body).toContain('>Cardio<');
+	});
 });

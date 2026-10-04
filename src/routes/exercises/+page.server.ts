@@ -15,7 +15,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		exercises: exercises.map((e) => ({
 			id: e.id,
 			name: e.name,
-			short_name: e.short_name
+			short_name: e.short_name,
+			kind: e.kind
 		}))
 	};
 };

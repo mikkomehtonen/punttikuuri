@@ -2,7 +2,11 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { exerciseType } from '$lib/server/db/schema';
-import { validateExerciseName, validateShortName } from '$lib/server/workout-validation';
+import {
+	validateExerciseName,
+	validateShortName,
+	validateExerciseKind
+} from '$lib/server/workout-validation';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -14,6 +18,7 @@ export const actions: Actions = {
 		const name = String(formData.get('name') ?? '').trim();
 		const shortName = String(formData.get('short_name') ?? '').trim() || null;
 		const displayOrderStr = String(formData.get('display_order') ?? '');
+		const kindStr = String(formData.get('kind') ?? '');
 
 		const nameError = validateExerciseName(name);
 		if (nameError) {
@@ -23,6 +28,11 @@ export const actions: Actions = {
 		const shortNameError = validateShortName(shortName);
 		if (shortNameError) {
 			return fail(400, { error: shortNameError });
+		}
+
+		const kindResult = validateExerciseKind(kindStr, locals.locale);
+		if (kindResult.error !== null) {
+			return fail(400, { error: kindResult.error });
 		}
 
 		let displayOrder: number | null = null;
@@ -39,6 +49,7 @@ export const actions: Actions = {
 				name,
 				short_name: shortName,
 				display_order: displayOrder,
+				kind: kindResult.kind,
 				created_at: new Date().toISOString()
 			})
 			.run();

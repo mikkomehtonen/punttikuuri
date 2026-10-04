@@ -6,6 +6,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import * as schema from '$lib/server/db/schema';
 import { registerUser } from '$lib/server/auth';
 import { exerciseType, workoutSession, setEntry } from '$lib/server/db/schema';
+import { cleanAllTables } from '$lib/server/db/__tests__/test-utils';
 
 const { mockDb } = vi.hoisted(() => ({ mockDb: { current: null as never } }));
 
@@ -69,11 +70,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-	sqlite.exec('DELETE FROM set_entry');
-	sqlite.exec('DELETE FROM workout_session');
-	sqlite.exec('DELETE FROM exercise_type');
-	sqlite.exec('DELETE FROM session');
-	sqlite.exec('DELETE FROM user');
+	cleanAllTables(sqlite);
 
 	const user = registerUser({ username: 'logset_user', password: 'password123' }, db);
 	if (!user.ok) throw new Error('Failed to create user');

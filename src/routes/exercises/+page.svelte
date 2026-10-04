@@ -41,6 +41,13 @@
 					{#if exercise.short_name}
 						<span class="ml-2"><Badge>{exercise.short_name}</Badge></span>
 					{/if}
+					<span class="ml-2"
+						><Badge
+							>{exercise.kind === 'cardio'
+								? t('exercises.kindCardio', locale)
+								: t('exercises.kindStrength', locale)}</Badge
+						></span
+					>
 				</Card>
 			</li>
 		{/each}

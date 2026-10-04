@@ -58,6 +58,7 @@ export function destroyTestDb(sqlite: Database.Database, dbPath: string): void {
 }
 
 export function cleanAllTables(sqlite: Database.Database): void {
+	sqlite.exec('DELETE FROM cardio_entry');
 	sqlite.exec('DELETE FROM set_entry');
 	sqlite.exec('DELETE FROM workout_session');
 	sqlite.exec('DELETE FROM exercise_type');

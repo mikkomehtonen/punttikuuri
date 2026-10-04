@@ -27,8 +27,8 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [
-						{ id: 1, name: 'Bench Press', short_name: 'BP' },
-						{ id: 2, name: 'Squat', short_name: null }
+						{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' },
+						{ id: 2, name: 'Squat', short_name: null, kind: 'strength' }
 					],
 					locale: 'en' as const,
 					theme: 'system' as const,
@@ -66,7 +66,7 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Test', short_name: null }],
+					exercises: [{ id: 1, name: 'Test', short_name: null, kind: 'strength' }],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -85,7 +85,7 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
+					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' }],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -103,7 +103,7 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP' }],
+					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' }],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -116,5 +116,43 @@ describe('Exercises Page', () => {
 		expect(body).toContain('BP');
 		expect(body).toContain('bg-primary-50');
 		expect(body).toContain('rounded-md');
+	});
+
+	it('should show a Cardio badge for cardio exercises and a Strength badge for strength exercises', () => {
+		const { body } = render(ExercisesPage, {
+			props: {
+				data: {
+					exercises: [
+						{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength' },
+						{ id: 2, name: 'Running', short_name: null, kind: 'cardio' }
+					],
+					locale: 'en' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+					logoLinkUrl: '',
+					isAdmin: false
+				}
+			}
+		});
+
+		expect(body).toContain('>Strength<');
+		expect(body).toContain('>Cardio<');
+	});
+
+	it('should show the Finnish Strength badge label when locale is fi', () => {
+		const { body } = render(ExercisesPage, {
+			props: {
+				data: {
+					exercises: [{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength' }],
+					locale: 'fi' as const,
+					theme: 'system' as const,
+					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const },
+					logoLinkUrl: '',
+					isAdmin: false
+				}
+			}
+		});
+
+		expect(body).toContain('>Voima<');
 	});
 });

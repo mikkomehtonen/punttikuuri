@@ -1,34 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'svelte/server';
 import ExerciseDetailPage from '../../[id]/+page.svelte';
+import { makeData as baseMakeData, historySession } from './fixtures';
 
-// A date N days before the current UTC date (matches makeData's default `today`),
+// A date N days before the current UTC date (matches makeData's `today`),
 // so the session is recent (<=7 days) and renders expanded by default.
 function recentDate(daysAgo: number): string {
 	return new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10);
 }
 
+// Anchor `today`/`selectedDate` to the real current date so `recentDate()`
+// sessions stay within the 7-day "recent" window.
 function makeData(overrides: Record<string, unknown> = {}) {
-	return {
-		exercise: { id: 1, name: 'Bench Press', short_name: null },
-		today: new Date().toISOString().slice(0, 10),
-		selectedDate: new Date().toISOString().slice(0, 10),
-		isToday: true,
-		selectedDateSets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
-		selectedDateComment: null as string | null,
-		previousSessions: [] as Array<{
-			workout_date: string;
-			comment: string | null;
-			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
-		}>,
-		lastSet: null as { weight_kg: number; repetitions: number } | null,
-		locale: 'en' as const,
-		theme: 'system' as const,
-		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-		logoLinkUrl: '',
-		isAdmin: false,
-		...overrides
-	};
+	const today = new Date().toISOString().slice(0, 10);
+	return baseMakeData({ today, selectedDate: today, ...overrides });
 }
 
 describe('Exercise Detail Page', () => {
@@ -92,19 +77,17 @@ describe('Exercise Detail Page', () => {
 			props: {
 				data: makeData({
 					previousSessions: [
-						{
+						historySession({
 							workout_date: '2025-06-01',
-							comment: null,
 							sets: [
 								{ set_number: 1, weight_kg: 130, repetitions: 5 },
 								{ set_number: 2, weight_kg: 130, repetitions: 5 }
 							]
-						},
-						{
+						}),
+						historySession({
 							workout_date: '2025-05-25',
-							comment: null,
 							sets: [{ set_number: 1, weight_kg: 120, repetitions: 8 }]
-						}
+						})
 					]
 				}),
 				form: null
@@ -134,11 +117,10 @@ describe('Exercise Detail Page', () => {
 			props: {
 				data: makeData({
 					previousSessions: [
-						{
+						historySession({
 							workout_date: recentDate(3),
-							comment: null,
 							sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
-						}
+						})
 					]
 				}),
 				form: null
@@ -320,11 +302,11 @@ describe('Exercise Detail Page', () => {
 				props: {
 					data: makeData({
 						previousSessions: [
-							{
+							historySession({
 								workout_date: recentDate(3),
 								comment: 'Felt heavy',
 								sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
-							}
+							})
 						]
 					}),
 					form: null
@@ -339,11 +321,10 @@ describe('Exercise Detail Page', () => {
 				props: {
 					data: makeData({
 						previousSessions: [
-							{
+							historySession({
 								workout_date: '2025-06-01',
-								comment: null,
 								sets: [{ set_number: 1, weight_kg: 130, repetitions: 5 }]
-							}
+							})
 						]
 					}),
 					form: null

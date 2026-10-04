@@ -13,6 +13,7 @@
 	let name = $state('');
 	let shortName = $state('');
 	let displayOrder = $state('');
+	let kind = $state('strength');
 </script>
 
 <svelte:head>
@@ -53,6 +54,32 @@
 				type="number"
 				bind:value={displayOrder}
 			/>
+
+			<fieldset>
+				<legend class="mb-2 font-medium">{t('exercises.kind', locale)}</legend>
+				<div class="flex gap-4">
+					<label class="flex min-h-[44px] items-center gap-2">
+						<input
+							type="radio"
+							name="kind"
+							value="strength"
+							bind:group={kind}
+							class="accent-primary-600"
+						/>
+						<span>{t('exercises.kindStrength', locale)}</span>
+					</label>
+					<label class="flex min-h-[44px] items-center gap-2">
+						<input
+							type="radio"
+							name="kind"
+							value="cardio"
+							bind:group={kind}
+							class="accent-primary-600"
+						/>
+						<span>{t('exercises.kindCardio', locale)}</span>
+					</label>
+				</div>
+			</fieldset>
 
 			<Button variant="primary" type="submit">
 				{t('exercises.submit', locale)}

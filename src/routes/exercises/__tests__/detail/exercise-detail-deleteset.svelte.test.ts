@@ -1,31 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ExerciseDetailPage from '../../[id]/+page.svelte';
-
-function makeData(overrides: Record<string, unknown> = {}) {
-	return {
-		exercise: { id: 1, name: 'Bench Press', short_name: null },
-		today: '2026-08-20',
-		selectedDate: '2026-08-20',
-		isToday: true,
-		selectedDateSets: [] as Array<{ set_number: number; weight_kg: number; repetitions: number }>,
-		selectedDateComment: null as string | null,
-		previousSessions: [] as Array<{
-			workout_date: string;
-			comment: string | null;
-			sets: Array<{ set_number: number; weight_kg: number; repetitions: number }>;
-		}>,
-		lastSet: null as { weight_kg: number; repetitions: number } | null,
-		locale: 'en' as const,
-		theme: 'system' as const,
-		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
-		logoLinkUrl: '',
-		isAdmin: false,
-		...overrides
-	};
-}
-
-type PageDataInput = ReturnType<typeof makeData>;
+import { makeData, type PageDataInput } from './fixtures';
 
 function setup(data: PageDataInput) {
 	const result = render(ExerciseDetailPage, { props: { data, form: null } });
@@ -65,7 +41,8 @@ describe('Exercise Detail Page set deletion UI', () => {
 					{
 						workout_date: '2026-08-19',
 						comment: null,
-						sets: [{ set_number: 1, weight_kg: 50, repetitions: 12 }]
+						sets: [{ set_number: 1, weight_kg: 50, repetitions: 12 }],
+						entries: []
 					}
 				]
 			})
@@ -159,7 +136,8 @@ describe('Exercise Detail Page set deletion UI', () => {
 						sets: [
 							{ set_number: 1, weight_kg: 50, repetitions: 12 },
 							{ set_number: 2, weight_kg: 55, repetitions: 10 }
-						]
+						],
+						entries: []
 					}
 				]
 			})
