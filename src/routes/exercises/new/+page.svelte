@@ -6,6 +6,8 @@
 	import Input from '$lib/components/Input.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Alert from '$lib/components/Alert.svelte';
+	import IconPicker from '$lib/components/IconPicker.svelte';
+	import { CARDIO_DEFAULT_ICON, STRENGTH_DEFAULT_ICON } from '$lib/icons/exercise-icons';
 
 	let { data, form }: { data: PageData; form: import('./$types').ActionData } = $props();
 
@@ -14,6 +16,11 @@
 	let shortName = $state('');
 	let displayOrder = $state('');
 	let kind = $state('strength');
+	// Seeds from `form.icon` so a 34-tile selection survives a failed submit:
+	// the plain POST form reloads the document with the failure payload.
+	// '' = "Default" (kind default icon).
+	let icon = $state<string>(form?.icon ?? '');
+	const defaultIconId = $derived(kind === 'cardio' ? CARDIO_DEFAULT_ICON : STRENGTH_DEFAULT_ICON);
 </script>
 
 <svelte:head>
@@ -80,6 +87,8 @@
 					</label>
 				</div>
 			</fieldset>
+
+			<IconPicker bind:value={icon} {locale} {defaultIconId} />
 
 			<Button variant="primary" type="submit">
 				{t('exercises.submit', locale)}

@@ -5,6 +5,8 @@
 	import Button from '$lib/components/Button.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ExerciseIcon from '$lib/components/ExerciseIcon.svelte';
+	import { resolveExerciseIcon } from '$lib/icons/exercise-icons';
 
 	let { data }: { data: PageData } = $props();
 
@@ -37,6 +39,9 @@
 		{#each exercises as exercise (exercise.id)}
 			<li>
 				<Card href="/exercises/{exercise.id}">
+					<span class="mr-2 inline-flex align-middle text-stone-500 dark:text-stone-400"
+						><ExerciseIcon id={resolveExerciseIcon(exercise.kind, exercise.icon)} /></span
+					>
 					<span class="font-medium">{exercise.name}</span>
 					{#if exercise.short_name}
 						<span class="ml-2"><Badge>{exercise.short_name}</Badge></span>

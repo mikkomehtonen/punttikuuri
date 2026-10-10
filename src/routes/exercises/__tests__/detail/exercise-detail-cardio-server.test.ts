@@ -793,4 +793,17 @@ describe('load function cardio data', () => {
 		expect(r.exercise.kind).toBe('strength');
 		expect(r.selectedDateCardioEntries).toHaveLength(0);
 	});
+
+	it('returns the exercise icon, or null when unset', async () => {
+		const unset = await page.load(mockEvent());
+		expect((unset as { exercise: { icon: string | null } }).exercise.icon).toBeNull();
+
+		db.update(exerciseType)
+			.set({ icon: 'bike' })
+			.where(eq(exerciseType.id, cardioExerciseId))
+			.run();
+
+		const set = await page.load(mockEvent());
+		expect((set as { exercise: { icon: string | null } }).exercise.icon).toBe('bike');
+	});
 });

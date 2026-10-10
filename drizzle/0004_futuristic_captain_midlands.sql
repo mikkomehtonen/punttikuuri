@@ -1,0 +1,1 @@
+ALTER TABLE `exercise_type` ADD `icon` text;

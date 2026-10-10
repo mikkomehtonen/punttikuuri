@@ -35,6 +35,9 @@ export const exerciseType = sqliteTable(
 		short_name: text('short_name'),
 		display_order: integer('display_order'),
 		kind: text('kind', { enum: KIND_VALUES }).notNull().default('strength'),
+		// App-layer allowlist (`isExerciseIconId`), not a DB constraint: the icon
+		// registry grows without migrations. NULL = "use the kind default icon".
+		icon: text('icon'),
 		created_at: text('created_at').notNull()
 	},
 	(table) => [

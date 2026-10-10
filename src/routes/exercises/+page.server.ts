@@ -16,7 +16,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			id: e.id,
 			name: e.name,
 			short_name: e.short_name,
-			kind: e.kind
+			kind: e.kind,
+			icon: e.icon
 		}))
 	};
 };

@@ -98,7 +98,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			id: exercise.id,
 			name: exercise.name,
 			short_name: exercise.short_name,
-			kind: exercise.kind
+			kind: exercise.kind,
+			icon: exercise.icon
 		},
 		today,
 		selectedDate,

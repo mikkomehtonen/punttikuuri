@@ -27,7 +27,7 @@
 **Date**: 2026-08-06
 **Area**: testing | database | migrations
 **What happened**: Adding a `comment` column to `workout_session` (new migration `0001`) broke existing `exercise.test.ts` DB tests with `table workout_session has no column named comment`, because `createTestDb` in `src/lib/server/db/__tests__/test-utils.ts` only loaded migration `0000`.
-**Takeaway**: `test-utils.ts` now loads every `*.sql` file in `drizzle/` (sorted). When adding a new migration, existing DB tests pick it up automatically; if a DB test fails with "no column named X", the test DB is not applying the latest migration.
+**Takeaway**: `test-utils.ts` now loads every `*.sql` file in `drizzle/` (sorted). When adding a new migration, existing DB tests pick it up automatically; if a DB test fails with "no column named X", the test DB is not applying the latest migration. Related facts: drizzle-kit emits **backtick**-quoted SQL (`ALTER TABLE \`exercise_type\` ADD \`icon\` text;`), so tests asserting generated migration text must tolerate backticks, not just double quotes; `createTestDb`applies migration SQL via raw`sqlite.exec`, **not** the drizzle-kit migrator — tests that must exercise the migrator (as `migrate.js`does) call`migrate(db, { migrationsFolder: './drizzle' })`directly; and`createTestDb`sets`foreign_keys = ON`, so inserting child rows (e.g. `exercise_type`) requires a parent `user` row first.
 
 ---
 
@@ -105,15 +105,6 @@
 
 ---
 
-## A single-item fixture flips to "latest" when the default-expands-latest rule is added
-
-**Date**: 2026-09-04
-**Area**: testing | Svelte
-**What happened**: Story 020 made `previousSessions[0]` (the latest history session) expand by default even when >7 days old. Three existing tests used a _single_ old session (e.g. `workout_date: '2026-08-12'`) and asserted it started collapsed — they all broke, because that lone session was now both the oldest and the latest, hence auto-expanded.
-**Takeaway**: When you change a `$derived` default that keys off positional order (`arr[0]`), re-check fixtures where the only item also satisfies that key. To keep asserting an old session stays collapsed, prepend a newer session so the subject is non-latest; to assert "single old expands," use a one-session fixture and assert expanded. Keep distinct `weight_kg` per session in multi-session fixtures so content presence/absence checks are unambiguous.
-
----
-
 ## drizzle-kit 0.31 SQLite text `enum` is type-only — no CHECK constraint
 
 **Date**: 2026-10-04
@@ -128,6 +119,24 @@
 **Date**: 2026-10-04
 **Area**: testing | dependencies
 **What happened**: `app.test.ts > Story 005 > should have zero npm audit vulnerabilities` fails on current branches because advisories were published after the lockfile was last updated (transitive dev deps: `vitest`, `@vitest/mocker`, `undici`, etc.). It fails identically at the pre-story base commit.
-**Takeaway**: When this test fails, verify it is pre-existing (check out the base commit or confirm the story touched no `package.json`/`package-lock.json`) and report it as environmental dependency drift — do not remediate dependencies inside a feature story, especially when the story pins dependency versions.
+**Takeaway**: When this test fails, verify it is pre-existing (check out the base commit or confirm the story touched no `package.json`/`package-lock.json`) and report it as environmental dependency drift — do not mix dependency remediation into feature commits. If the verify hard gate requires a green suite, remediate in a **separate standalone commit** on the branch (targeted `npm update` of the vulnerable transitive dev deps plus a patch bump, e.g. vitest 4.1.8→4.1.11) so reviewers can assess it independently; the story 022 branch did exactly this and both reviewers accepted it.
+
+---
+
+## vitest `vi.mock`/`vi.hoisted` cannot be encapsulated in a shared helper
+
+**Date**: 2026-10-10
+**Area**: testing | vitest
+**What happened**: Story 022's code review flagged a 9th copy of the create-exercise action test harness. The mock boilerplate cannot move into the shared helper: vitest hoists `vi.hoisted` and `vi.mock` per test file, so a helper module calling `vi.mock` would not apply before the test file's static import of the module under test.
+**Takeaway**: Keep only the 5-line `vi.hoisted` holder + `vi.mock('$lib/server/db', ...)` block in each test file; put everything else (in-memory DB + `migrate()`, `registerUser` seeding, `mockEvent`, count/latest/redirect helpers, and `beforeAll`/`afterAll`/`beforeEach` registration) in a factory like `src/routes/exercises/new/__tests__/action-harness.ts` — hooks called from a function invoked at test-file top level register on that file's suite correctly. Detail-page action harnesses (params, multi-user, session fixtures) are structurally different and were left separate.
+
+---
+
+## Reviewer suggestions can contradict story ACs — harden, don't delete
+
+**Date**: 2026-10-10
+**Area**: workflow | reviewers
+**What happened**: Story 022's AC (Task 2) explicitly requires a test that reads the generated migration SQL from disk and asserts the `ALTER TABLE ... ADD "icon" text` text. The code reviewer suggested deleting that regex test as brittle; the acceptance reviewer had passed it as required AC coverage. Deleting it would have flipped acceptance to Fail.
+**Takeaway**: When a reviewer's fix conflicts with a story AC, keep the AC coverage and make the test robust instead (scope the scan to the file matching the change, tolerate drizzle-kit's backtick quoting, assert absence of forbidden clauses), then re-run both reviewers and let the acceptance verdict arbitrate. A reviewer Fail on the same test the AC mandates is a requirements conflict, not a code defect.
 
 ---

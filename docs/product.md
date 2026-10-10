@@ -28,6 +28,7 @@ A mobile-first gym workout logging application for quickly recording sets during
 - **Collapsible Old Workouts** — Workout history sessions older than 7 days collapse to date only by default; clicking the date expands to show sets and comment ([story](stories/019-collapse-old-workouts/story.md))
 - **Latest Workout Always Visible** — The newest session in the workout history is expanded by default even when older than 7 days, so the latest weights and set lengths are visible without clicking; it remains collapsible ([story](stories/020-show-latest-exercise/story.md))
 - **Cardio Exercises** — When creating an exercise, choose strength or cardio; cardio exercises log multiple entries per day (e.g. a morning and an evening run), each with a required duration (hours/minutes/seconds), an optional distance in km, and an optional free-text description (e.g. "5x400m/1.30"); cardio entries are editable and deletable for any date, and the exercise list shows a strength/cardio badge ([story](stories/021-cardio-exercises/story.md))
+- **Exercise Icons** — Every exercise displays an icon: strength exercises default to a dumbbell and cardio exercises to a running figure, and the create-exercise form offers an optional picker of 34 freely licensed (MIT, Tabler Icons) glyphs that overrides the kind default; icons render in the exercise list and the exercise detail header ([story](stories/022-exercise-icons/story.md))
 
 ## Non-Goals
 

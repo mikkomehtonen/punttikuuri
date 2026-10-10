@@ -4,7 +4,13 @@ export type HistorySession = PreviousSession;
 
 export function makeData(overrides: Record<string, unknown> = {}) {
 	return {
-		exercise: { id: 1, name: 'Bench Press', short_name: null, kind: 'strength' as const },
+		exercise: {
+			id: 1,
+			name: 'Bench Press',
+			short_name: null,
+			kind: 'strength' as const,
+			icon: null as string | null
+		},
 		today: '2026-08-20',
 		selectedDate: '2026-08-20',
 		isToday: true,

@@ -11,6 +11,8 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import EditIcon from '$lib/components/icons/EditIcon.svelte';
 	import DeleteIcon from '$lib/components/icons/DeleteIcon.svelte';
+	import ExerciseIcon from '$lib/components/ExerciseIcon.svelte';
+	import { resolveExerciseIcon } from '$lib/icons/exercise-icons';
 	import CardioFields from './CardioFields.svelte';
 	import CardioEntryView from './CardioEntryView.svelte';
 	import type { SetSummary, CardioEntrySummary } from './utils';
@@ -156,7 +158,12 @@
 	</Button>
 </div>
 
-<h1 class="mb-8 text-2xl font-bold">{exercise.name}</h1>
+<div class="mb-8 flex items-center gap-3">
+	<span class="text-stone-500 dark:text-stone-400"
+		><ExerciseIcon id={resolveExerciseIcon(exercise.kind, exercise.icon)} class="h-7 w-7" /></span
+	>
+	<h1 class="text-2xl font-bold">{exercise.name}</h1>
+</div>
 
 <section class="mb-8">
 	<h2 class="mb-4 text-lg font-semibold">{isToday ? t('workout.today', locale) : selectedDate}</h2>

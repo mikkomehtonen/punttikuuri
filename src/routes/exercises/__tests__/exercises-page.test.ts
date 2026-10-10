@@ -27,8 +27,8 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [
-						{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' },
-						{ id: 2, name: 'Squat', short_name: null, kind: 'strength' }
+						{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength', icon: null },
+						{ id: 2, name: 'Squat', short_name: null, kind: 'strength', icon: null }
 					],
 					locale: 'en' as const,
 					theme: 'system' as const,
@@ -66,7 +66,7 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Test', short_name: null, kind: 'strength' }],
+					exercises: [{ id: 1, name: 'Test', short_name: null, kind: 'strength', icon: null }],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -85,7 +85,9 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' }],
+					exercises: [
+						{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength', icon: null }
+					],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -103,7 +105,9 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength' }],
+					exercises: [
+						{ id: 1, name: 'Bench Press', short_name: 'BP', kind: 'strength', icon: null }
+					],
 					locale: 'en' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
@@ -123,8 +127,8 @@ describe('Exercises Page', () => {
 			props: {
 				data: {
 					exercises: [
-						{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength' },
-						{ id: 2, name: 'Running', short_name: null, kind: 'cardio' }
+						{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength', icon: null },
+						{ id: 2, name: 'Running', short_name: null, kind: 'cardio', icon: null }
 					],
 					locale: 'en' as const,
 					theme: 'system' as const,
@@ -143,7 +147,9 @@ describe('Exercises Page', () => {
 		const { body } = render(ExercisesPage, {
 			props: {
 				data: {
-					exercises: [{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength' }],
+					exercises: [
+						{ id: 1, name: 'Bench Press', short_name: null, kind: 'strength', icon: null }
+					],
 					locale: 'fi' as const,
 					theme: 'system' as const,
 					user: { id: 1, username: 'test', locale: 'fi' as const, theme: 'system' as const },

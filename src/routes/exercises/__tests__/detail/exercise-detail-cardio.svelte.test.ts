@@ -48,7 +48,13 @@ describe('Cardio detail page log form', () => {
 	it('renders the strength set form and no cardio inputs for a strength exercise', () => {
 		const view = setup(
 			makeCardioData({
-				exercise: { id: 2, name: 'Bench Press', short_name: null, kind: 'strength' as const }
+				exercise: {
+					id: 2,
+					name: 'Bench Press',
+					short_name: null,
+					kind: 'strength' as const,
+					icon: null
+				}
 			})
 		);
 

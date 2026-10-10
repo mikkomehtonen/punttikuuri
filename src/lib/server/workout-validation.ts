@@ -1,5 +1,6 @@
 import { t, type Locale } from '$lib/i18n';
 import { KIND_VALUES, type ExerciseKind } from '$lib/server/db/schema';
+import { isExerciseIconId, type ExerciseIconId } from '$lib/icons/exercise-icons';
 
 export function validateWorkoutDate(dateStr: string, locale: Locale = 'en'): string | null {
 	const error = t('workout.dateError', locale);
@@ -91,6 +92,20 @@ export function validateExerciseKind(kind: string, locale: Locale = 'en'): KindR
 		return { error: null, kind: kind as ExerciseKind };
 	}
 	return { error: t('errors.invalid', locale), kind: null };
+}
+
+type IconResult = { error: string; icon: null } | { error: null; icon: ExerciseIconId | null };
+
+// Empty string means "Default" (kind default icon) and stores NULL. The allowlist
+// is the app-layer icon registry, not a DB constraint, so it is enforced here.
+export function validateExerciseIcon(icon: string, locale: Locale = 'en'): IconResult {
+	if (icon === '') {
+		return { error: null, icon: null };
+	}
+	if (isExerciseIconId(icon)) {
+		return { error: null, icon };
+	}
+	return { error: t('exercises.iconInvalid', locale), icon: null };
 }
 
 const MAX_DURATION_SECONDS = 86400;

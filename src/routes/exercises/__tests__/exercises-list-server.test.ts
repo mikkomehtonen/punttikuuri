@@ -65,4 +65,35 @@ describe('exercises list load', () => {
 		expect(bench?.kind).toBe('strength');
 		expect(running?.kind).toBe('cardio');
 	});
+
+	it('returns icon for every exercise (null when unset)', async () => {
+		db.insert(exerciseType)
+			.values([
+				{
+					user_id: userId,
+					name: 'Cycling',
+					kind: 'strength',
+					icon: 'bike',
+					created_at: new Date().toISOString()
+				},
+				{
+					user_id: userId,
+					name: 'Bench Press',
+					kind: 'strength',
+					created_at: new Date().toISOString()
+				}
+			])
+			.run();
+
+		const result = (await load({
+			locals: { user: { id: userId, username: 'list_user', locale: 'en', theme: 'system' } }
+		} as never)) as {
+			exercises: Array<{ id: number; name: string; kind: string; icon: string | null }>;
+		};
+
+		const cycling = result.exercises.find((e) => e.name === 'Cycling');
+		const bench = result.exercises.find((e) => e.name === 'Bench Press');
+		expect(cycling?.icon).toBe('bike');
+		expect(bench?.icon).toBeNull();
+	});
 });
