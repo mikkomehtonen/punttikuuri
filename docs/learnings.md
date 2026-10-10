@@ -42,30 +42,12 @@
 
 ---
 
-## Client-side behavior tests must use `.svelte.test.ts` (jsdom project)
+## jsdom component tests (`*.svelte.test.ts`): project selection, query scoping, layout proxies
 
 **Date**: 2026-08-20
-**Area**: testing | Svelte | vitest
-**What happened**: To test that a `$effect` re-syncs form fields when `data` changes, the SSR test approach (`svelte/server` render, server project) could not be used — `$effect` does not run during SSR. The vitest config lives in `vite.config.ts` (there is no `vitest.config.ts`) and splits by filename: the `server` project (node) runs `src/**/*.test.ts` excluding `*.svelte.test.ts`; the `browser` project (jsdom) runs only `src/**/*.svelte.test.ts`.
-**Takeaway**: For client-side reactivity (effects, prop-change behavior), name the test `*.svelte.test.ts` so it lands in the jsdom project, and use `@testing-library/svelte` `render`/`rerender` (see `layout.svelte.test.ts`). `await rerender(...)` flushes `$effect` and the state updates it triggers, so DOM assertions immediately after work.
-
----
-
-## No auto-cleanup in jsdom component tests — scope queries to the container
-
-**Date**: 2026-08-20
-**Area**: testing | jsdom
-**What happened**: A first version of `exercise-detail-page.svelte.test.ts` used global `document.querySelector`; components from earlier tests remained in `document.body` (auto-cleanup did not fire in this setup), so later tests asserted against stale elements from previous tests (e.g. expected `'80'`, received `'90'` from a prior test's rerendered component).
-**Takeaway**: In `*.svelte.test.ts` files, scope all queries to the `container` returned by `render` (`container.querySelector(...)`) and clear `document.body.innerHTML` in `afterEach` (or call `unmount()`). Never rely on global `document` queries or on auto-cleanup.
-
----
-
-## Reviewer lint gate is repo-wide `prettier --check .` (includes `stories/*.md`)
-
-**Date**: 2026-08-22
-**Area**: workflow | linting
-**What happened**: The acceptance reviewer's lint gate runs `prettier --check .` over the whole repository; story 015's `story.md` (planner output) plus two story files failed it, failing the verdict even though all acceptance criteria were covered. In story 018 the reviewer fixed the pre-existing story-file violations itself and left the changes **uncommitted**, so the branch tree was dirty after a Pass verdict.
-**Takeaway**: Before running reviewers, run `npx prettier --check .` yourself — `stories/*.md` and `drizzle/` included — and `prettier --write` the offenders (review the diff; markdown reformatting can mangle inline code spans). After `drizzle-kit generate`, run `npx prettier --write drizzle` — the generated `.sql`/snapshot/journal files fail the check as emitted. After any reviewer run, check `git status` — reviewers may fix lint issues and leave them uncommitted; commit (or revert) those changes before reporting completion.
+**Area**: testing | jsdom | Svelte
+**What happened**: Two separate traps in `*.svelte.test.ts`. (1) To test that a `$effect` re-syncs form fields when `data` changes, the SSR approach (`svelte/server` render, server project) could not be used — `$effect` does not run during SSR; the vitest config in `vite.config.ts` (there is no `vitest.config.ts`) splits by filename: the `server` project (node) runs `src/**/*.test.ts` excluding `*.svelte.test.ts`, the `browser` project (jsdom) runs only `src/**/*.svelte.test.ts`. (2) A first version of `exercise-detail-page.svelte.test.ts` used global `document.querySelector`; components from earlier tests remained in `document.body` (auto-cleanup did not fire), so later tests asserted against stale elements (expected `'80'`, received `'90'` from a prior test's rerendered component).
+**Takeaway**: For client-side reactivity (effects, prop-change behavior) name the test `*.svelte.test.ts` so it lands in the jsdom project, and use `@testing-library/svelte` `render`/`rerender` — `await rerender(...)` flushes `$effect` and the state updates it triggers. Scope all queries to the `container` returned by `render` and clear `document.body.innerHTML` in `afterEach` (or `unmount()`); never rely on global `document` queries or auto-cleanup. Related (story 023): jsdom applies **no CSS**, so a Tailwind layout fix (e.g. `items-end` on a grid so 44px tiles bottom-align) is only testable through class strings — assert the utility is present on the right element, and assert the _absence_ of hiding utilities on anything that must stay visible (`not.toMatch(/(^|\s)(sr-only|invisible|collapse|hidden|[a-z-]+:hidden)(\s|$)/)`; single-variant only, and it cannot see hiding inherited from a parent). Prove such tests bite by mutating the component: revert the fix, then inject `sr-only` / `max-sm:hidden`, and confirm the suite goes red.
 
 ---
 
@@ -75,15 +57,6 @@
 **Area**: testing | environment
 **What happened**: `favicon-http.test.ts` failed with `ECONNREFUSED 127.0.0.1:4173` for two compounding reasons: (1) `vite preview` bound to IPv6 `::1` only, so fetches to `localhost`/`127.0.0.1` were refused while `http://[::1]:4173` returned 200; (2) earlier runs had left orphaned `vite preview` processes holding port 4173 — `server.kill()` on the npm wrapper does not kill the vite child, and `pkill` is unavailable in this environment.
 **Takeaway**: The test now spawns `npm run preview -- --host 127.0.0.1 --port 4173`, polls for readiness (no fixed sleep), and kills the whole process group (`detached: true` + `process.kill(-pid, 'SIGTERM')`). If port 4173 is busy, find stale PIDs by scanning `/proc/*/cmdline` for `vite preview` and `kill` them individually.
-
----
-
-## Resumed reviewer subagent sessions can re-emit stale reports
-
-**Date**: 2026-08-20
-**Area**: workflow | reviewers
-**What happened**: Re-running the acceptance reviewer with a reused `task_id` returned a byte-identical copy of the first run's report — citing failures (e.g. a version assertion) that had already been fixed in the code — so the "Fail" verdict did not reflect the current HEAD.
-**Takeaway**: When a reviewer verdict contradicts the verified actual state (run the failing commands yourself first), do not trust the report: re-run the reviewer with a fresh session (no `task_id`) and read the full report via `git show <HASH> --format=%B -s` to confirm it matches the current code before acting on it.
 
 ---
 
@@ -132,11 +105,20 @@
 
 ---
 
-## Reviewer suggestions can contradict story ACs — harden, don't delete
+## Reviewer reports: verify before acting, and never let one delete AC coverage
 
 **Date**: 2026-10-10
 **Area**: workflow | reviewers
-**What happened**: Story 022's AC (Task 2) explicitly requires a test that reads the generated migration SQL from disk and asserts the `ALTER TABLE ... ADD "icon" text` text. The code reviewer suggested deleting that regex test as brittle; the acceptance reviewer had passed it as required AC coverage. Deleting it would have flipped acceptance to Fail.
-**Takeaway**: When a reviewer's fix conflicts with a story AC, keep the AC coverage and make the test robust instead (scope the scan to the file matching the change, tolerate drizzle-kit's backtick quoting, assert absence of forbidden clauses), then re-run both reviewers and let the acceptance verdict arbitrate. A reviewer Fail on the same test the AC mandates is a requirements conflict, not a code defect.
+**What happened**: Story 022's AC (Task 2) explicitly requires a test that reads the generated migration SQL from disk and asserts the `ALTER TABLE ... ADD "icon" text` text. The code reviewer suggested deleting that regex test as brittle; the acceptance reviewer had passed it as required AC coverage. Deleting it would have flipped acceptance to Fail. Separately, an earlier session re-ran a reviewer with a reused `task_id` and got a byte-identical copy of the previous run's report, citing already-fixed failures.
+**Takeaway**: When a reviewer's fix conflicts with a story AC, keep the AC coverage and make the test robust instead (scope the scan to the file matching the change, tolerate drizzle-kit's backtick quoting, assert absence of forbidden clauses), then re-run both reviewers and let the acceptance verdict arbitrate — a reviewer Fail on the same test the AC mandates is a requirements conflict, not a code defect. And when a verdict contradicts the verified actual state (run the commands yourself first), re-run that reviewer in a fresh session and read the full report via `git show <HASH> --format=%B -s` before acting.
+
+---
+
+## Code reviewer rejects tautological and dead-markup test assertions
+
+**Date**: 2026-10-10
+**Area**: testing | reviewers
+**What happened**: Story 023's first test pass got a code-review **Fail** even though acceptance passed: the new tests asserted `radio.value === ''` after locating the radio with `querySelector('input[name="icon"][value=""]')`, re-asserted an `aria-label` already asserted by an existing test, and checked `expect(x).not.toBeNull()` on a node the helper had already resolved. A follow-up round flagged that asserting `min-h-[44px]` on _every_ tile label locked in a utility that is inert on the default label.
+**Takeaway**: In this repo's tests, every assertion must be able to fail: don't re-assert what the query selector already guarantees, don't duplicate an existing assertion, and scope class-string assertions to the elements that actually depend on the class (comment why). Prefer Vitest object-row `it.each` with `$field` interpolation over positional `%s` tuples — the tuple form silently swapped the caption and locale in test names.
 
 ---

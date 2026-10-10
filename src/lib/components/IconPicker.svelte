@@ -25,8 +25,11 @@
 
 <fieldset>
 	<legend class="mb-2 font-medium">{t('exercises.icon', locale)}</legend>
-	<div class="grid grid-cols-6 gap-2">
+	<div class="grid grid-cols-6 items-end gap-2">
 		<label class="flex min-h-[44px] cursor-pointer flex-col items-center justify-center gap-1">
+			<span class="text-xs text-stone-500 dark:text-stone-400"
+				>{t('exercises.iconDefault', locale)}</span
+			>
 			<input
 				type="radio"
 				{name}
@@ -36,9 +39,6 @@
 				aria-label={t('exercises.iconDefault', locale)}
 			/>
 			<span class={tileClasses}><ExerciseIcon id={defaultIconId} /></span>
-			<span class="text-xs text-stone-500 dark:text-stone-400"
-				>{t('exercises.iconDefault', locale)}</span
-			>
 		</label>
 		{#each iconIds as id (id)}
 			<label class="flex min-h-[44px] cursor-pointer items-center justify-center">

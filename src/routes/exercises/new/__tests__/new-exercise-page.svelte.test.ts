@@ -2,12 +2,13 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import NewExercisePage from '../+page.svelte';
 import { EXERCISE_ICONS } from '$lib/icons/exercise-icons';
+import type { Locale } from '$lib/i18n';
 
-function makeData() {
+function makeData(locale: Locale = 'en') {
 	return {
-		locale: 'en' as const,
+		locale,
 		theme: 'system' as const,
-		user: { id: 1, username: 'test', locale: 'en' as const, theme: 'system' as const },
+		user: { id: 1, username: 'test', locale, theme: 'system' as const },
 		logoLinkUrl: '',
 		isAdmin: false
 	};
@@ -86,5 +87,87 @@ describe('New Exercise Page icon picker', () => {
 
 		const preview = container.querySelector('input[name="icon"][value=""] + span svg');
 		expect(preview!.getAttribute('data-icon')).toBe('run');
+	});
+
+	describe('default tile caption layout', () => {
+		function defaultRadio(container: HTMLElement): HTMLInputElement {
+			const radio = container.querySelector<HTMLInputElement>('input[name="icon"][value=""]');
+			if (!radio) throw new Error('default tile radio not found');
+			return radio;
+		}
+
+		function defaultTileLabel(container: HTMLElement): HTMLLabelElement {
+			const label = defaultRadio(container).closest('label');
+			if (!label) throw new Error('default tile label not found');
+			return label;
+		}
+
+		function mountGrid(locale: Locale = 'en') {
+			const { container } = render(NewExercisePage, {
+				props: { data: makeData(locale), form: null }
+			});
+			const label = defaultTileLabel(container);
+			const grid = label.parentElement;
+			if (!grid) throw new Error('icon picker grid not found');
+			return { container, label, grid };
+		}
+
+		function assertCaptionAboveIcon(label: HTMLLabelElement, caption: string) {
+			const spans = [...label.querySelectorAll('span')];
+			const captionSpan = spans.find((s) => s.textContent?.trim() === caption);
+			const iconSpan = spans.find((s) => s.querySelector('svg'));
+			expect(captionSpan, `caption span "${caption}"`).toBeDefined();
+			expect(iconSpan, 'icon span').toBeDefined();
+
+			// The caption is visible: no hiding utility (plain or responsive), and it
+			// keeps its caption styling.
+			expect(captionSpan!.className).not.toMatch(
+				/(^|\s)(sr-only|invisible|collapse|hidden|[a-z-]+:hidden)(\s|$)/
+			);
+			expect(captionSpan!.classList.contains('text-xs')).toBe(true);
+
+			// The caption precedes the icon in DOM order inside the label...
+			expect(
+				captionSpan!.compareDocumentPosition(iconSpan!) & Node.DOCUMENT_POSITION_FOLLOWING
+			).toBeTruthy();
+			// ...and is the label's first child.
+			expect(label.firstElementChild).toBe(captionSpan);
+		}
+
+		it.each([
+			{ locale: 'en', caption: 'Default' },
+			{ locale: 'fi', caption: 'Oletus' }
+		] as { locale: Locale; caption: string }[])(
+			'renders the $caption caption above the default tile icon ($locale)',
+			({ locale, caption }) => {
+				assertCaptionAboveIcon(mountGrid(locale).label, caption);
+			}
+		);
+
+		it('keeps the default radio checked when nothing is selected', () => {
+			expect(defaultRadio(mountGrid().container).checked).toBe(true);
+		});
+
+		it('renders no caption on the non-default tiles', () => {
+			const { grid, label } = mountGrid();
+			const otherLabels = [...grid.querySelectorAll(':scope > label')].filter((l) => l !== label);
+			expect(otherLabels).toHaveLength(Object.keys(EXERCISE_ICONS).length);
+			for (const tile of otherLabels) {
+				// ExerciseIcon renders path-only svg markup, so any text means a stray caption.
+				expect(tile.textContent?.trim(), 'non-default tile text').toBe('');
+			}
+		});
+
+		it('adds items-end to the icon picker grid so the 44px tiles bottom-align', () => {
+			const { grid, label } = mountGrid();
+			expect(grid.classList.contains('items-end')).toBe(true);
+
+			// Only the non-default tiles depend on the 44px floor; the default label's
+			// content (caption + gap + tile) already exceeds it.
+			const otherLabels = [...grid.querySelectorAll(':scope > label')].filter((l) => l !== label);
+			for (const tile of otherLabels) {
+				expect(tile.classList.contains('min-h-[44px]'), 'tile label min-height').toBe(true);
+			}
+		});
 	});
 });
